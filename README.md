@@ -60,4 +60,4 @@ streamlit run app.py
 
 ## Author
 
-**Pawan Singh Kapkoti** — Operational Team Leader at Copernus Fresh Fish, MSc Data Analytics (Aston University)
+Built by a team that understands factory operations from the inside. MSc Data Analytics. Real factory floor experience.

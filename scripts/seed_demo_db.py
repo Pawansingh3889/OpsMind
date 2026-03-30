@@ -127,7 +127,7 @@ def seed():
 
     # === STAFF ===
     staff_data = [
-        (1, 'Pawan Kapkoti', 'Team Leader', 'Days', 44, 14.50),
+        (1, 'Alex Morgan', 'Shift Manager', 'Days', 44, 14.50),
         (2, 'Marek Kowalski', 'Line Operator', 'Days', 40, 11.44),
         (3, 'Agne Kazlauskiene', 'Line Operator', 'Days', 40, 11.44),
         (4, 'Radu Popescu', 'Line Operator', 'Nights', 48, 12.50),

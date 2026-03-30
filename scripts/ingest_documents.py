@@ -10,7 +10,7 @@ SAMPLE_DOCS = {
     'HACCP_Plan_2024.pdf': {
         'category': 'HACCP',
         'content': """
-HACCP PLAN — Copernus Fresh Fish Ltd
+HACCP PLAN — Northshore Seafoods Ltd
 Hazard Analysis and Critical Control Points
 
 CRITICAL CONTROL POINT 1: RECEIVING RAW MATERIALS
@@ -50,7 +50,7 @@ Effective Date: January 2024
 
 PURPOSE: To ensure all cold storage areas maintain temperatures within food safety limits.
 
-SCOPE: All cold rooms, freezers, and chilled dispatch areas at Copernus Fresh Fish.
+SCOPE: All cold rooms, freezers, and chilled dispatch areas at Northshore Seafoods.
 
 PROCEDURE:
 1. Temperature checks must be performed and recorded every 2 hours during operating hours.
@@ -64,7 +64,7 @@ PROCEDURE:
    - Production Floor: Below 12°C
 
 5. If temperature is outside acceptable range:
-   a. Immediately inform the Team Leader or Production Manager
+   a. Immediately inform the Shift Manager or Production Manager
    b. Check the refrigeration unit for obvious faults
    c. Do NOT open the door unnecessarily
    d. Contact maintenance if the issue persists for more than 15 minutes
@@ -116,7 +116,7 @@ ALLERGEN MANAGEMENT PROCEDURES:
         'content': """
 LIDL UK — PRODUCT SPECIFICATION
 Product: Atlantic Salmon Fillet (skinless, boneless)
-Supplier: Copernus Fresh Fish Ltd
+Supplier: Northshore Seafoods Ltd
 Spec Number: LDL-SAL-2024-001
 
 PRODUCT DESCRIPTION:
@@ -156,7 +156,7 @@ DELIVERY:
     'Staff_Handbook_2024.pdf': {
         'category': 'HR',
         'content': """
-COPERNUS FRESH FISH — STAFF HANDBOOK 2024
+NORTHSHORE SEAFOODS — STAFF HANDBOOK 2024
 
 WORKING HOURS:
 - Standard shifts: Days (06:00-14:00), Afternoons (14:00-22:00), Nights (22:00-06:00)
@@ -167,12 +167,12 @@ WORKING HOURS:
 
 HEALTH AND SAFETY:
 - All staff must wear provided PPE: hairnet, beard snood (if applicable), white coat, blue gloves, safety boots, ear protection (in noisy areas)
-- Report all accidents and near-misses to your Team Leader immediately
+- Report all accidents and near-misses to your Shift Manager immediately
 - Complete accident book entry for all incidents
 - First aiders: James Wilson (Days), Radu Popescu (Nights)
 
 ABSENCE AND SICK PAY:
-- Notify your Team Leader before your shift start time if unable to attend
+- Notify your Shift Manager before your shift start time if unable to attend
 - Self-certification for first 7 days
 - Doctor's fit note (sick note) required after 7 days
 - Statutory Sick Pay (SSP): 116.75 per week for up to 28 weeks
