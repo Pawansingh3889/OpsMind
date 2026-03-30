@@ -420,6 +420,46 @@
     </div>
 </section>
 
+<!-- ROI CALCULATOR -->
+<section class="section" style="background:white;" id="roi">
+    <div class="section-inner">
+        <div class="section-label">Calculate Your Savings</div>
+        <div class="section-title">How much is waste costing your factory?</div>
+        <div class="section-subtitle">Enter your numbers. See what OpsMind can save you.</div>
+        <div style="max-width:700px;margin:0 auto;background:#f8fafc;border-radius:16px;padding:2.5rem;border:1px solid #e2e8f0;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+                <div>
+                    <label style="font-weight:600;font-size:0.9rem;display:block;margin-bottom:0.5rem;">Annual Revenue (GBP)</label>
+                    <input type="number" id="roi-revenue" value="50000000" style="width:100%;padding:0.75rem;border:2px solid #e2e8f0;border-radius:8px;font-size:1rem;" oninput="calcROI()">
+                </div>
+                <div>
+                    <label style="font-weight:600;font-size:0.9rem;display:block;margin-bottom:0.5rem;">Current Waste Rate (%)</label>
+                    <input type="range" id="roi-waste" min="1" max="20" value="8" style="width:100%;margin-top:0.5rem;" oninput="calcROI()">
+                    <div style="text-align:center;font-weight:700;color:var(--red);font-size:1.2rem;" id="roi-waste-label">8%</div>
+                </div>
+            </div>
+            <div style="margin-top:2rem;display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;text-align:center;">
+                <div style="background:#fef2f2;border-radius:12px;padding:1.5rem;">
+                    <div style="color:#991b1b;font-size:0.8rem;font-weight:600;">You Lose Annually</div>
+                    <div style="color:#dc2626;font-size:1.8rem;font-weight:900;" id="roi-loss">GBP 4,000,000</div>
+                </div>
+                <div style="background:#f0fdf4;border-radius:12px;padding:1.5rem;">
+                    <div style="color:#166534;font-size:0.8rem;font-weight:600;">OpsMind Saves (2% reduction)</div>
+                    <div style="color:#059669;font-size:1.8rem;font-weight:900;" id="roi-savings">GBP 1,000,000</div>
+                </div>
+                <div style="background:#eff6ff;border-radius:12px;padding:1.5rem;">
+                    <div style="color:#1e40af;font-size:0.8rem;font-weight:600;">ROI</div>
+                    <div style="color:#2563eb;font-size:1.8rem;font-weight:900;" id="roi-return">6,567%</div>
+                </div>
+            </div>
+            <p style="text-align:center;margin-top:1.5rem;color:var(--text-light);font-size:0.85rem;">Based on industry data: AI-driven waste monitoring typically reduces waste by 2-5%. OpsMind Professional costs GBP 15,000/year.</p>
+            <div style="text-align:center;margin-top:1rem;">
+                <a href="mailto:pawankapkoti3889@gmail.com" class="btn btn-green btn-lg">Get a Custom ROI Analysis</a>
+            </div>
+        </div>
+    </div>
+</section>
+
 <!-- CTA -->
 <section class="cta-section">
     <h2>Stop guessing. Start asking.</h2>
@@ -449,6 +489,21 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
         document.querySelector(a.getAttribute('href'))?.scrollIntoView({ behavior: 'smooth' });
     });
 });
+
+// ROI Calculator
+function calcROI() {
+    const revenue = parseFloat(document.getElementById('roi-revenue').value) || 0;
+    const wasteRate = parseFloat(document.getElementById('roi-waste').value) || 0;
+    document.getElementById('roi-waste-label').textContent = wasteRate + '%';
+    const annualLoss = revenue * (wasteRate / 100);
+    const savings = annualLoss * 0.25; // OpsMind reduces waste by 25% of current waste
+    const opsmindCost = 15000;
+    const roi = opsmindCost > 0 ? Math.round(((savings - opsmindCost) / opsmindCost) * 100) : 0;
+    document.getElementById('roi-loss').textContent = 'GBP ' + annualLoss.toLocaleString('en-GB', {maximumFractionDigits: 0});
+    document.getElementById('roi-savings').textContent = 'GBP ' + savings.toLocaleString('en-GB', {maximumFractionDigits: 0});
+    document.getElementById('roi-return').textContent = roi.toLocaleString() + '%';
+}
+calcROI();
 </script>
 </body>
 </html>

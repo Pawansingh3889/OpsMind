@@ -26,9 +26,10 @@ def check_yield_drops():
     """Alert if any product's yield dropped significantly vs 30-day average."""
     conn = sqlite3.connect(get_db_path())
     df = pd.read_sql_query('''
-        SELECT pr.name,
+        SELECT pr.name, pr.unit_cost_per_kg,
                ROUND(AVG(CASE WHEN p.date >= date('now', '-7 days') THEN p.yield_pct END), 1) as this_week,
-               ROUND(AVG(CASE WHEN p.date >= date('now', '-30 days') THEN p.yield_pct END), 1) as monthly_avg
+               ROUND(AVG(CASE WHEN p.date >= date('now', '-30 days') THEN p.yield_pct END), 1) as monthly_avg,
+               COALESCE(SUM(CASE WHEN p.date >= date('now', '-7 days') THEN p.waste_kg END), 0) as week_waste_kg
         FROM production p
         JOIN products pr ON p.product_id = pr.id
         WHERE p.date >= date('now', '-30 days')
@@ -41,11 +42,12 @@ def check_yield_drops():
     for _, row in df.iterrows():
         drop = row['monthly_avg'] - row['this_week']
         if drop > YIELD_DROP_THRESHOLD:
+            waste_cost = row['week_waste_kg'] * row['unit_cost_per_kg']
             alerts.append({
                 'level': 'warning',
                 'icon': 'chart-line-down',
-                'title': f"Yield drop on {row['name']}",
-                'message': f"This week: {row['this_week']}% vs 30-day avg: {row['monthly_avg']}% (down {drop:.1f}%)",
+                'title': f"Yield drop on {row['name']} — GBP {waste_cost:,.0f} lost this week",
+                'message': f"This week: {row['this_week']}% vs 30-day avg: {row['monthly_avg']}% (down {drop:.1f}%). Waste cost this week: GBP {waste_cost:,.0f}.",
                 'category': 'yield'
             })
     return alerts

@@ -65,10 +65,12 @@ with st.sidebar:
         conn = sqlite3.connect(db_path)
         q_count = conn.execute("SELECT COUNT(*) FROM production WHERE date >= date('now', '-7 days')").fetchone()[0]
         w_total = conn.execute("SELECT COALESCE(SUM(waste_kg), 0) FROM production WHERE date >= date('now', '-7 days')").fetchone()[0]
+        w_cost = conn.execute("SELECT COALESCE(SUM(p.waste_kg * pr.unit_cost_per_kg), 0) FROM production p JOIN products pr ON p.product_id = pr.id WHERE p.date >= date('now', '-7 days')").fetchone()[0]
         o_pending = conn.execute("SELECT COUNT(*) FROM orders WHERE status = 'pending'").fetchone()[0]
         conn.close()
         st.metric("Production runs (7d)", q_count)
-        st.metric("Total waste (7d)", f"{w_total:,.0f} kg")
+        st.metric("Waste (7d)", f"{w_total:,.0f} kg")
+        st.metric("💷 Waste cost (7d)", f"GBP {w_cost:,.0f}")
         st.metric("Pending orders", o_pending)
     except Exception:
         st.caption("Connect database to see stats")
@@ -203,15 +205,33 @@ elif '📊 Dashboard' in tab:
         conn = sqlite3.connect(db_path)
 
         # KPI cards
-        c1, c2, c3, c4 = st.columns(4)
+        c1, c2, c3, c4, c5 = st.columns(5)
         today_prod = pd.read_sql_query(
             "SELECT COALESCE(SUM(finished_output_kg), 0) as output, COALESCE(SUM(waste_kg), 0) as waste, COALESCE(AVG(yield_pct), 0) as yield_avg FROM production WHERE date >= date('now', '-1 day')", conn)
+        today_cost = pd.read_sql_query(
+            "SELECT COALESCE(SUM(p.waste_kg * pr.unit_cost_per_kg), 0) as cost FROM production p JOIN products pr ON p.product_id = pr.id WHERE p.date >= date('now', '-1 day')", conn)
         pending = conn.execute("SELECT COUNT(*) FROM orders WHERE status='pending'").fetchone()[0]
 
         c1.metric("Today's Output", f"{today_prod.iloc[0]['output']:,.0f} kg")
         c2.metric("Today's Waste", f"{today_prod.iloc[0]['waste']:,.0f} kg")
-        c3.metric("Avg Yield", f"{today_prod.iloc[0]['yield_avg']:.1f}%")
-        c4.metric("Pending Orders", pending)
+        c3.metric("💷 Waste Cost", f"GBP {today_cost.iloc[0]['cost']:,.0f}")
+        c4.metric("Avg Yield", f"{today_prod.iloc[0]['yield_avg']:.1f}%")
+        c5.metric("Pending Orders", pending)
+
+        # Monthly money lost
+        monthly = pd.read_sql_query(
+            "SELECT COALESCE(SUM(p.waste_kg * pr.unit_cost_per_kg), 0) as cost FROM production p JOIN products pr ON p.product_id = pr.id WHERE p.date >= date('now', '-30 days')", conn)
+        monthly_cost = monthly.iloc[0]['cost']
+        annual_projected = monthly_cost * 12
+        st.markdown(f"""
+        <div style="background:linear-gradient(135deg,#fef2f2,#fee2e2);border:1px solid #fca5a5;border-radius:12px;padding:1.2rem;margin-bottom:1.5rem;display:flex;justify-content:space-between;align-items:center;">
+            <div><strong style="color:#991b1b;">💷 Money Lost to Waste</strong></div>
+            <div style="display:flex;gap:2rem;">
+                <div><span style="color:#991b1b;font-size:1.3rem;font-weight:800;">GBP {monthly_cost:,.0f}</span><br><span style="color:#b91c1c;font-size:0.8rem;">This Month</span></div>
+                <div><span style="color:#991b1b;font-size:1.3rem;font-weight:800;">GBP {annual_projected:,.0f}</span><br><span style="color:#b91c1c;font-size:0.8rem;">Projected Annual</span></div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
         # Production trend
         st.subheader("Production Trend (30 days)")
@@ -276,10 +296,12 @@ elif '📈 Yield & Waste' in tab:
         fig.add_hline(y=60, line_dash="dash", line_color="red", annotation_text="Target: 60%")
         st.plotly_chart(fig, use_container_width=True)
 
-    # Yield by product table
+    # Yield by product table with money
     st.subheader("Yield by Product")
     yield_df = get_yield_by_product(days)
     if not yield_df.empty:
+        total_waste_cost = yield_df['waste_cost_gbp'].sum() if 'waste_cost_gbp' in yield_df.columns else 0
+        st.markdown(f"**Total waste cost ({days}d): GBP {total_waste_cost:,.0f}**")
         st.dataframe(yield_df, use_container_width=True)
 
     # Waste breakdown
@@ -307,8 +329,11 @@ elif '📈 Yield & Waste' in tab:
         if st.button("Predict", use_container_width=True):
             prediction = predict_waste(pred_product, pred_input)
             if prediction:
+                # Estimate waste cost (use avg unit cost of 7.50)
+                est_cost = prediction['expected_waste_kg'] * 7.50
                 st.success(f"Expected output: **{prediction['expected_output_kg']} kg** | "
-                          f"Expected waste: **{prediction['expected_waste_kg']} kg** | "
+                          f"Expected waste: **{prediction['expected_waste_kg']} kg** "
+                          f"(**GBP {est_cost:,.0f}**) | "
                           f"Yield: **{prediction['expected_yield_pct']}%**")
             else:
                 st.warning("No historical data found for this product.")
