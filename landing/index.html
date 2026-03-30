@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpsMind — The AI Brain for Your Factory</title>
+    <meta name="description" content="On-premises AI assistant for food processing factories. Ask questions in plain English, get instant answers from your data. Zero cloud costs.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #0f172a;
+            --accent: #3b82f6;
+            --accent-light: #60a5fa;
+            --green: #10b981;
+            --red: #ef4444;
+            --orange: #f59e0b;
+            --bg: #ffffff;
+            --bg-dark: #0f172a;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --text-white: #f8fafc;
+        }
+        body { font-family: 'Inter', sans-serif; color: var(--text); line-height: 1.6; overflow-x: hidden; }
+        a { text-decoration: none; color: inherit; }
+
+        /* === NAVBAR === */
+        .nav { position: fixed; top: 0; width: 100%; z-index: 100; padding: 1rem 2rem; transition: all 0.3s; }
+        .nav.scrolled { background: rgba(15,23,42,0.95); backdrop-filter: blur(20px); box-shadow: 0 4px 30px rgba(0,0,0,0.1); }
+        .nav-inner { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .nav-logo { font-size: 1.5rem; font-weight: 800; color: white; display: flex; align-items: center; gap: 0.5rem; }
+        .nav-logo span { background: linear-gradient(135deg, var(--accent), var(--green)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .nav-links { display: flex; gap: 2rem; align-items: center; }
+        .nav-links a { color: rgba(255,255,255,0.7); font-size: 0.9rem; transition: color 0.2s; }
+        .nav-links a:hover { color: white; }
+        .btn { padding: 0.7rem 1.5rem; border-radius: 8px; font-weight: 600; font-size: 0.9rem; transition: all 0.3s; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 0.5rem; }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-primary:hover { background: #2563eb; transform: translateY(-2px); box-shadow: 0 8px 25px rgba(59,130,246,0.4); }
+        .btn-outline { border: 2px solid rgba(255,255,255,0.3); color: white; background: transparent; }
+        .btn-outline:hover { border-color: white; background: rgba(255,255,255,0.1); }
+        .btn-dark { background: var(--primary); color: white; }
+        .btn-dark:hover { background: #1e293b; }
+        .btn-green { background: var(--green); color: white; }
+        .btn-green:hover { background: #059669; transform: translateY(-2px); box-shadow: 0 8px 25px rgba(16,185,129,0.4); }
+        .btn-lg { padding: 1rem 2.5rem; font-size: 1.1rem; border-radius: 12px; }
+
+        /* === HERO === */
+        .hero { min-height: 100vh; background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); display: flex; align-items: center; position: relative; overflow: hidden; }
+        .hero::before { content: ''; position: absolute; top: -50%; right: -20%; width: 800px; height: 800px; background: radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 70%); }
+        .hero::after { content: ''; position: absolute; bottom: -30%; left: -10%; width: 600px; height: 600px; background: radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%); }
+        .hero-inner { max-width: 1200px; margin: 0 auto; padding: 6rem 2rem 4rem; display: grid; grid-template-columns: 1.2fr 1fr; gap: 4rem; align-items: center; position: relative; z-index: 1; }
+        .hero-badge { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.3); padding: 0.4rem 1rem; border-radius: 50px; color: var(--accent-light); font-size: 0.85rem; margin-bottom: 1.5rem; }
+        .hero h1 { font-size: 3.8rem; font-weight: 900; color: white; line-height: 1.1; margin-bottom: 1.5rem; }
+        .hero h1 .gradient { background: linear-gradient(135deg, var(--accent-light), var(--green)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero p { font-size: 1.2rem; color: rgba(255,255,255,0.6); margin-bottom: 2rem; max-width: 520px; }
+        .hero-buttons { display: flex; gap: 1rem; flex-wrap: wrap; }
+        .hero-stats { display: flex; gap: 2rem; margin-top: 3rem; }
+        .hero-stat { text-align: center; }
+        .hero-stat-num { font-size: 2rem; font-weight: 800; color: white; }
+        .hero-stat-label { font-size: 0.8rem; color: rgba(255,255,255,0.5); }
+
+        /* Hero demo terminal */
+        .hero-terminal { background: #1e293b; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; box-shadow: 0 25px 60px rgba(0,0,0,0.5); }
+        .terminal-header { background: #0f172a; padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .terminal-dot { width: 12px; height: 12px; border-radius: 50%; }
+        .terminal-dot.red { background: #ef4444; }
+        .terminal-dot.yellow { background: #f59e0b; }
+        .terminal-dot.green { background: #10b981; }
+        .terminal-title { color: rgba(255,255,255,0.5); font-size: 0.8rem; margin-left: 0.5rem; }
+        .terminal-body { padding: 1.5rem; font-family: 'Courier New', monospace; font-size: 0.85rem; line-height: 1.8; }
+        .terminal-prompt { color: var(--green); }
+        .terminal-command { color: white; }
+        .terminal-output { color: rgba(255,255,255,0.6); }
+        .terminal-highlight { color: var(--accent-light); }
+        .typing-cursor { display: inline-block; width: 8px; height: 16px; background: var(--green); animation: blink 1s infinite; vertical-align: text-bottom; }
+        @keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+
+        /* === PROBLEM SECTION === */
+        .section { padding: 6rem 2rem; }
+        .section-inner { max-width: 1200px; margin: 0 auto; }
+        .section-label { font-size: 0.85rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 0.5rem; }
+        .section-title { font-size: 2.5rem; font-weight: 800; margin-bottom: 1rem; line-height: 1.2; }
+        .section-subtitle { font-size: 1.1rem; color: var(--text-light); max-width: 600px; margin-bottom: 3rem; }
+
+        .problem-section { background: #fafbfc; }
+        .problem-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
+        .problem-card { background: white; border-radius: 16px; padding: 2rem; border: 1px solid #e2e8f0; transition: all 0.3s; }
+        .problem-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.08); }
+        .problem-icon { width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 1rem; }
+        .problem-card h3 { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .problem-card p { color: var(--text-light); font-size: 0.95rem; }
+        .problem-stat { font-size: 2rem; font-weight: 800; color: var(--red); margin-bottom: 0.25rem; }
+
+        /* === FEATURES === */
+        .features-section { background: white; }
+        .feature-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem; }
+        .feature-card { background: #f8fafc; border-radius: 16px; padding: 2rem; border: 1px solid #e2e8f0; transition: all 0.3s; }
+        .feature-card:hover { border-color: var(--accent); box-shadow: 0 8px 30px rgba(59,130,246,0.08); }
+        .feature-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+        .feature-card p { color: var(--text-light); font-size: 0.9rem; }
+        .feature-tag { font-size: 0.7rem; padding: 0.2rem 0.6rem; border-radius: 50px; font-weight: 600; }
+        .tag-core { background: #dbeafe; color: #1e40af; }
+        .tag-ai { background: #fef3c7; color: #92400e; }
+        .tag-compliance { background: #dcfce7; color: #166534; }
+
+        /* === HOW IT WORKS === */
+        .how-section { background: var(--bg-dark); color: white; }
+        .how-section .section-subtitle { color: rgba(255,255,255,0.6); }
+        .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem; margin-top: 2rem; }
+        .step { text-align: center; }
+        .step-num { width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--green)); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 800; margin: 0 auto 1rem; }
+        .step h3 { font-size: 1rem; margin-bottom: 0.5rem; }
+        .step p { font-size: 0.85rem; color: rgba(255,255,255,0.5); }
+
+        /* === PRICING === */
+        .pricing-section { background: #f8fafc; }
+        .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
+        .pricing-card { background: white; border-radius: 16px; padding: 2.5rem; border: 1px solid #e2e8f0; text-align: center; transition: all 0.3s; }
+        .pricing-card.featured { border: 2px solid var(--accent); transform: scale(1.05); box-shadow: 0 20px 50px rgba(59,130,246,0.15); }
+        .pricing-card .price { font-size: 3rem; font-weight: 900; margin: 1rem 0; }
+        .pricing-card .price span { font-size: 1rem; font-weight: 400; color: var(--text-light); }
+        .pricing-card .plan-name { font-size: 1.3rem; font-weight: 700; }
+        .pricing-card ul { list-style: none; text-align: left; margin: 1.5rem 0; }
+        .pricing-card li { padding: 0.5rem 0; color: var(--text-light); font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem; }
+        .pricing-card li i { color: var(--green); }
+        .popular-badge { background: var(--accent); color: white; padding: 0.3rem 1rem; border-radius: 50px; font-size: 0.75rem; font-weight: 600; display: inline-block; margin-bottom: 0.5rem; }
+
+        /* === COMPARISON === */
+        .compare-table { width: 100%; border-collapse: collapse; margin-top: 2rem; }
+        .compare-table th, .compare-table td { padding: 1rem; text-align: center; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; }
+        .compare-table th { font-weight: 700; background: #f8fafc; }
+        .compare-table td:first-child { text-align: left; font-weight: 600; }
+        .compare-table .check { color: var(--green); font-size: 1.2rem; }
+        .compare-table .cross { color: #cbd5e1; font-size: 1.2rem; }
+        .compare-table .highlight { background: rgba(59,130,246,0.05); }
+
+        /* === TESTIMONIAL === */
+        .testimonial-section { background: white; }
+        .testimonial { max-width: 700px; margin: 0 auto; text-align: center; }
+        .testimonial blockquote { font-size: 1.3rem; font-style: italic; color: var(--text); line-height: 1.6; margin-bottom: 1.5rem; }
+        .testimonial .author { font-weight: 600; }
+        .testimonial .role { color: var(--text-light); font-size: 0.9rem; }
+
+        /* === CTA === */
+        .cta-section { background: linear-gradient(135deg, #0f172a, #1e3a5f); color: white; text-align: center; padding: 6rem 2rem; }
+        .cta-section h2 { font-size: 2.5rem; font-weight: 900; margin-bottom: 1rem; }
+        .cta-section p { color: rgba(255,255,255,0.6); font-size: 1.1rem; margin-bottom: 2rem; max-width: 500px; margin-left: auto; margin-right: auto; }
+
+        /* === FOOTER === */
+        .footer { background: #0f172a; color: rgba(255,255,255,0.5); padding: 3rem 2rem; text-align: center; font-size: 0.85rem; }
+        .footer a { color: var(--accent-light); }
+
+        /* === RESPONSIVE === */
+        @media (max-width: 768px) {
+            .hero-inner { grid-template-columns: 1fr; text-align: center; }
+            .hero h1 { font-size: 2.5rem; }
+            .hero p { margin: 0 auto 2rem; }
+            .hero-buttons { justify-content: center; }
+            .hero-stats { justify-content: center; }
+            .hero-terminal { display: none; }
+            .problem-grid, .feature-grid, .pricing-grid, .steps { grid-template-columns: 1fr; }
+            .pricing-card.featured { transform: none; }
+            .nav-links { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="nav" id="nav">
+    <div class="nav-inner">
+        <a href="#" class="nav-logo"><i class="fa-solid fa-brain"></i> <span>OpsMind</span></a>
+        <div class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#how">How It Works</a>
+            <a href="#pricing">Pricing</a>
+            <a href="#compare">Compare</a>
+            <a href="https://github.com/Pawansingh3889/OpsMind" class="btn btn-outline"><i class="fa-brands fa-github"></i> GitHub</a>
+            <a href="mailto:pawankapkoti3889@gmail.com" class="btn btn-primary">Book a Demo</a>
+        </div>
+    </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+    <div class="hero-inner">
+        <div>
+            <div class="hero-badge"><i class="fa-solid fa-lock"></i> 100% On-Premises. Your Data Never Leaves.</div>
+            <h1>The <span class="gradient">AI Brain</span> for Your Factory</h1>
+            <p>Ask questions in plain English. Get instant answers from your production data, documents, and spreadsheets. No cloud. No subscriptions. No data leakage.</p>
+            <div class="hero-buttons">
+                <a href="https://github.com/Pawansingh3889/OpsMind" class="btn btn-primary btn-lg"><i class="fa-brands fa-github"></i> Get Started Free</a>
+                <a href="mailto:pawankapkoti3889@gmail.com" class="btn btn-outline btn-lg"><i class="fa-solid fa-calendar"></i> Book a Demo</a>
+            </div>
+            <div class="hero-stats">
+                <div class="hero-stat"><div class="hero-stat-num">0</div><div class="hero-stat-label">Cloud Cost</div></div>
+                <div class="hero-stat"><div class="hero-stat-num">10x</div><div class="hero-stat-label">Faster Answers</div></div>
+                <div class="hero-stat"><div class="hero-stat-num">18</div><div class="hero-stat-label">Languages</div></div>
+            </div>
+        </div>
+        <div class="hero-terminal">
+            <div class="terminal-header">
+                <div class="terminal-dot red"></div>
+                <div class="terminal-dot yellow"></div>
+                <div class="terminal-dot green"></div>
+                <span class="terminal-title">OpsMind Chat</span>
+            </div>
+            <div class="terminal-body">
+                <div><span class="terminal-prompt">You: </span><span class="terminal-command">Why did we lose money on Salmon today?</span></div>
+                <br>
+                <div><span class="terminal-prompt">OpsMind: </span><span class="terminal-output">Today's salmon production had a </span><span class="terminal-highlight">yield of 54.2%</span><span class="terminal-output"> vs your 30-day average of 62.1%. This is a </span><span style="color:#ef4444;">7.9% drop</span><span class="terminal-output">.</span></div>
+                <br>
+                <div><span class="terminal-output">Root cause: 340kg rejected due to </span><span class="terminal-highlight">size spec failure</span><span class="terminal-output"> on Line 2 (Morning shift).</span></div>
+                <br>
+                <div><span class="terminal-output">Estimated cost: </span><span style="color:#ef4444;">GBP 2,890</span><span class="terminal-output"> in wasted raw material.</span></div>
+                <br>
+                <div><span class="terminal-output">Recommendation: Check cutting machine calibration on Line 2. Last calibrated 12 days ago.</span></div>
+                <br>
+                <div><span class="terminal-prompt">You: </span><span class="terminal-command">Show me waste trends this week</span><span class="typing-cursor"></span></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- PROBLEM -->
+<section class="section problem-section" id="problem">
+    <div class="section-inner">
+        <div class="section-label">The Problem</div>
+        <div class="section-title">Your factory is bleeding money. You just can't see where.</div>
+        <div class="section-subtitle">Food factories lose millions annually to waste, compliance failures, and poor decisions made without data.</div>
+        <div class="problem-grid">
+            <div class="problem-card">
+                <div class="problem-icon" style="background:#fef2f2;color:#dc2626;"><i class="fa-solid fa-trash"></i></div>
+                <div class="problem-stat">5-15%</div>
+                <h3>Revenue Lost to Waste</h3>
+                <p>For a GBP 50M factory, that's GBP 2.5M-7.5M per year thrown away. Most managers can't tell you why.</p>
+            </div>
+            <div class="problem-card">
+                <div class="problem-icon" style="background:#fef3c7;color:#d97706;"><i class="fa-solid fa-clipboard-check"></i></div>
+                <div class="problem-stat">GBP 500K</div>
+                <h3>Cost of Audit Failure</h3>
+                <p>A failed BRC audit means lost contracts with Lidl, Tesco, Iceland. One temperature log gap can trigger it.</p>
+            </div>
+            <div class="problem-card">
+                <div class="problem-icon" style="background:#ede9fe;color:#7c3aed;"><i class="fa-solid fa-clock"></i></div>
+                <div class="problem-stat">4+ Hours</div>
+                <h3>Wasted on Reports Daily</h3>
+                <p>Managers spend hours pulling data from spreadsheets and ERP systems instead of making decisions.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FEATURES -->
+<section class="section features-section" id="features">
+    <div class="section-inner">
+        <div class="section-label">Features</div>
+        <div class="section-title">Everything your factory needs. One AI assistant.</div>
+        <div class="section-subtitle">Built by a factory team leader who lives these problems every day.</div>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <h3><i class="fa-solid fa-database" style="color:var(--accent);"></i> Natural Language SQL <span class="feature-tag tag-core">Core</span></h3>
+                <p>"How much salmon did we process today?" — OpsMind writes the SQL, queries your database, and explains the results in plain English. No SQL knowledge needed.</p>
+            </div>
+            <div class="feature-card">
+                <h3><i class="fa-solid fa-file-pdf" style="color:var(--red);"></i> Document Intelligence <span class="feature-tag tag-core">Core</span></h3>
+                <p>Search your SOPs, HACCP plans, customer specs, and audit reports instantly. "What's the allergen procedure for cod?" — finds the exact paragraph.</p>
+            </div>
+            <div class="feature-card">
+                <h3><i class="fa-solid fa-chart-line" style="color:var(--green);"></i> Waste Prediction <span class="feature-tag tag-ai">AI</span></h3>
+                <p>Predicts expected waste before production starts. Tracks yield trends. Alerts you when yield drops below target. Suggests optimal batch sizes.</p>
+            </div>
+            <div class="feature-card">
+                <h3><i class="fa-solid fa-shield-check" style="color:var(--orange);"></i> Compliance Dashboard <span class="feature-tag tag-compliance">BRC</span></h3>
+                <p>One-click audit reports. Instant batch traceability. Allergen matrix. Temperature excursion alerts. Be audit-ready 365 days a year.</p>
+            </div>
+            <div class="feature-card">
+                <h3><i class="fa-solid fa-bell" style="color:var(--red);"></i> Smart Alerts</h3>
+                <p>Automatic warnings: yield drops, temperature excursions, overtime breaches, expiring stock, order shortfalls. Know problems before they cost you money.</p>
+            </div>
+            <div class="feature-card">
+                <h3><i class="fa-solid fa-language" style="color:var(--accent);"></i> Multi-Language</h3>
+                <p>Workers ask in Polish, Lithuanian, Romanian, Hindi — OpsMind responds in their language. Voice input for hands-free queries on the factory floor.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section how-section" id="how">
+    <div class="section-inner">
+        <div class="section-label" style="color:var(--accent-light);">How It Works</div>
+        <div class="section-title">Up and running in 30 minutes.</div>
+        <div class="section-subtitle">No cloud setup. No API keys. No monthly bills.</div>
+        <div class="steps">
+            <div class="step">
+                <div class="step-num">1</div>
+                <h3>Install on Any PC</h3>
+                <p>Download Ollama and OpsMind. Works on any Windows, Mac, or Linux machine. Even an old office PC.</p>
+            </div>
+            <div class="step">
+                <div class="step-num">2</div>
+                <h3>Connect Your Data</h3>
+                <p>Point to your SQL database, upload PDFs, drag in spreadsheets. OpsMind indexes everything locally.</p>
+            </div>
+            <div class="step">
+                <div class="step-num">3</div>
+                <h3>Ask in Plain English</h3>
+                <p>"Why is our yield dropping?" — OpsMind queries your data, searches your documents, and gives you the answer.</p>
+            </div>
+            <div class="step">
+                <div class="step-num">4</div>
+                <h3>Save Millions</h3>
+                <p>Reduce waste, ace audits, make better decisions. Factories using OpsMind save 2-5% of revenue annually.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- COMPARISON -->
+<section class="section" id="compare" style="background:#f8fafc;">
+    <div class="section-inner">
+        <div class="section-label">Why OpsMind</div>
+        <div class="section-title">The only AI built for factory floors.</div>
+        <table class="compare-table">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th class="highlight">OpsMind</th>
+                    <th>ChatGPT / Copilot</th>
+                    <th>Databricks</th>
+                    <th>FoodDocs</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>On-Premises (data stays local)</td><td class="highlight"><i class="fa-solid fa-check check"></i></td><td><i class="fa-solid fa-xmark cross"></i></td><td><i class="fa-solid fa-xmark cross"></i></td><td><i class="fa-solid fa-xmark cross"></i></td></tr>
+                <tr><td>Natural Language SQL Queries</td><td class="highlight"><i class="fa-solid fa-check check"></i></td><td><i class="fa-solid fa-xmark cross"></i></td><td><i class="fa-solid fa-check check"></i></td><td><i class="fa-solid fa-xmark cross"></i></td></tr>
+                <tr><td>Document Search (SOPs, HACCP)</td><td class="highlight"><i class="fa-solid fa-check check"></i></td><td><i class="fa-solid fa-xmark cross"></i></td><td><i class="fa-solid fa-xmark cross"></i></td><td><i class="fa-solid fa-check check"></i></td></tr>
+                <tr><td>Food Industry Specific</td><td class="highlight"><i class="fa-solid fa-check check"></i></td><td><i class="fa-solid fa-xmark cross"></i></td><td><i class="fa-solid fa-xmark cross"></i></td><td><i class="fa-solid fa-check check"></i></td></tr>
+                <tr><td>Waste Prediction & Yield</td><td class="highlight"><i class="fa-solid fa-check check"></i></td><td><i class="fa-solid fa-xmark cross"></i></td><td><i class="fa-solid fa-xmark cross"></i></td><td><i class="fa-solid fa-xmark cross"></i></td></tr>
+                <tr><td>BRC/HACCP Compliance</td><td class="highlight"><i class="fa-solid fa-check check"></i></td><td><i class="fa-solid fa-xmark cross"></i></td><td><i class="fa-solid fa-xmark cross"></i></td><td><i class="fa-solid fa-check check"></i></td></tr>
+                <tr><td>Multi-Language + Voice</td><td class="highlight"><i class="fa-solid fa-check check"></i></td><td><i class="fa-solid fa-check check"></i></td><td><i class="fa-solid fa-xmark cross"></i></td><td><i class="fa-solid fa-xmark cross"></i></td></tr>
+                <tr><td>Zero Monthly Cost</td><td class="highlight"><i class="fa-solid fa-check check"></i></td><td><i class="fa-solid fa-xmark cross"></i></td><td><i class="fa-solid fa-xmark cross"></i></td><td><i class="fa-solid fa-xmark cross"></i></td></tr>
+                <tr>
+                    <td><strong>Annual Cost</strong></td>
+                    <td class="highlight"><strong style="color:var(--green);">Free / GBP 15K</strong></td>
+                    <td><strong>GBP 6K+</strong></td>
+                    <td><strong>GBP 100K+</strong></td>
+                    <td><strong>GBP 3K+</strong></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- PRICING -->
+<section class="section pricing-section" id="pricing">
+    <div class="section-inner">
+        <div class="section-label">Pricing</div>
+        <div class="section-title">Pays for itself in the first month.</div>
+        <div class="section-subtitle">If OpsMind saves you just 1% waste on a GBP 50M operation, that's GBP 500K per year.</div>
+        <div class="pricing-grid">
+            <div class="pricing-card">
+                <div class="plan-name">Open Source</div>
+                <div class="price">Free<span> forever</span></div>
+                <p style="color:var(--text-light);margin-bottom:1rem;">Self-hosted. Full source code.</p>
+                <ul>
+                    <li><i class="fa-solid fa-check"></i> SQL Query Agent</li>
+                    <li><i class="fa-solid fa-check"></i> Document Search</li>
+                    <li><i class="fa-solid fa-check"></i> Excel Analysis</li>
+                    <li><i class="fa-solid fa-check"></i> Basic Dashboards</li>
+                    <li><i class="fa-solid fa-check"></i> Community Support</li>
+                </ul>
+                <a href="https://github.com/Pawansingh3889/OpsMind" class="btn btn-dark" style="width:100%;justify-content:center;"><i class="fa-brands fa-github"></i> Download</a>
+            </div>
+            <div class="pricing-card featured">
+                <div class="popular-badge">Most Popular</div>
+                <div class="plan-name">Professional</div>
+                <div class="price">GBP 1,250<span>/month</span></div>
+                <p style="color:var(--text-light);margin-bottom:1rem;">We install, configure, and support.</p>
+                <ul>
+                    <li><i class="fa-solid fa-check"></i> Everything in Free</li>
+                    <li><i class="fa-solid fa-check"></i> Waste Prediction AI</li>
+                    <li><i class="fa-solid fa-check"></i> Compliance Dashboard</li>
+                    <li><i class="fa-solid fa-check"></i> Smart Alerts</li>
+                    <li><i class="fa-solid fa-check"></i> ERP Integration</li>
+                    <li><i class="fa-solid fa-check"></i> On-site Installation</li>
+                    <li><i class="fa-solid fa-check"></i> Priority Support</li>
+                </ul>
+                <a href="mailto:pawankapkoti3889@gmail.com" class="btn btn-primary" style="width:100%;justify-content:center;">Book a Demo</a>
+            </div>
+            <div class="pricing-card">
+                <div class="plan-name">Enterprise</div>
+                <div class="price">Custom</div>
+                <p style="color:var(--text-light);margin-bottom:1rem;">Multi-site. Custom features.</p>
+                <ul>
+                    <li><i class="fa-solid fa-check"></i> Everything in Professional</li>
+                    <li><i class="fa-solid fa-check"></i> Multi-Factory Deployment</li>
+                    <li><i class="fa-solid fa-check"></i> Custom AI Training</li>
+                    <li><i class="fa-solid fa-check"></i> API Access</li>
+                    <li><i class="fa-solid fa-check"></i> Dedicated Account Manager</li>
+                    <li><i class="fa-solid fa-check"></i> SLA Guarantee</li>
+                </ul>
+                <a href="mailto:pawankapkoti3889@gmail.com" class="btn btn-dark" style="width:100%;justify-content:center;">Contact Sales</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+    <h2>Stop guessing. Start asking.</h2>
+    <p>Your factory data has the answers. OpsMind helps you find them in seconds, not hours.</p>
+    <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+        <a href="https://github.com/Pawansingh3889/OpsMind" class="btn btn-green btn-lg"><i class="fa-brands fa-github"></i> Get Started Free</a>
+        <a href="mailto:pawankapkoti3889@gmail.com" class="btn btn-outline btn-lg"><i class="fa-solid fa-envelope"></i> Contact Us</a>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+    <p>Built by <a href="https://github.com/Pawansingh3889">Pawan Singh Kapkoti</a> — Operational Team Leader turned AI Engineer. Hull, UK.</p>
+    <p style="margin-top:0.5rem;">OpsMind is open source. <a href="https://github.com/Pawansingh3889/OpsMind">Star us on GitHub.</a></p>
+</footer>
+
+<script>
+// Navbar scroll effect
+window.addEventListener('scroll', () => {
+    document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 50);
+});
+
+// Smooth scroll
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+        e.preventDefault();
+        document.querySelector(a.getAttribute('href'))?.scrollIntoView({ behavior: 'smooth' });
+    });
+});
+</script>
+</body>
+</html>
