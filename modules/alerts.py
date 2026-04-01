@@ -1,15 +1,7 @@
 """Smart alerts and anomaly detection for factory operations."""
-import sqlite3
 import pandas as pd
-from config import DATABASE_URL, YIELD_DROP_THRESHOLD, MAX_WEEKLY_HOURS
-
-
-def get_db_path():
-    url = DATABASE_URL
-    if url.startswith('sqlite:///'):
-        return url.replace('sqlite:///', '')
-    return 'data/demo.db'
-
+from modules.database import query
+from config import YIELD_DROP_THRESHOLD, MAX_WEEKLY_HOURS
 
 def check_all_alerts():
     """Run all alert checks and return a list of active alerts."""
@@ -21,11 +13,9 @@ def check_all_alerts():
     alerts.extend(check_order_shortfalls())
     return sorted(alerts, key=lambda a: {'critical': 0, 'warning': 1, 'info': 2}[a['level']])
 
-
 def check_yield_drops():
     """Alert if any product's yield dropped significantly vs 30-day average."""
-    conn = sqlite3.connect(get_db_path())
-    df = pd.read_sql_query('''
+    df = query('''
         SELECT pr.name, pr.unit_cost_per_kg,
                ROUND(AVG(CASE WHEN p.date >= date('now', '-7 days') THEN p.yield_pct END), 1) as this_week,
                ROUND(AVG(CASE WHEN p.date >= date('now', '-30 days') THEN p.yield_pct END), 1) as monthly_avg,
@@ -35,8 +25,8 @@ def check_yield_drops():
         WHERE p.date >= date('now', '-30 days')
         GROUP BY pr.name
         HAVING this_week IS NOT NULL AND monthly_avg IS NOT NULL
-    ''', conn)
-    conn.close()
+    ''')
+    
 
     alerts = []
     for _, row in df.iterrows():
@@ -52,11 +42,9 @@ def check_yield_drops():
             })
     return alerts
 
-
 def check_temperature_excursions():
     """Alert on recent temperature excursions."""
-    conn = sqlite3.connect(get_db_path())
-    df = pd.read_sql_query('''
+    df = query('''
         SELECT location, temperature, recorded_at
         FROM temp_logs
         WHERE recorded_at >= date('now', '-1 day')
@@ -66,8 +54,8 @@ def check_temperature_excursions():
         )
         ORDER BY recorded_at DESC
         LIMIT 5
-    ''', conn)
-    conn.close()
+    ''')
+    
 
     alerts = []
     for _, row in df.iterrows():
@@ -80,16 +68,14 @@ def check_temperature_excursions():
         })
     return alerts
 
-
 def check_overtime():
     """Alert if staff are approaching or exceeding Working Time Regulations limits."""
-    conn = sqlite3.connect(get_db_path())
-    df = pd.read_sql_query(f'''
+    df = query(f'''
         SELECT name, role, hours_this_week, shift_pattern
         FROM staff
         WHERE hours_this_week > {MAX_WEEKLY_HOURS - 4}
-    ''', conn)
-    conn.close()
+    ''')
+    
 
     alerts = []
     for _, row in df.iterrows():
@@ -111,11 +97,9 @@ def check_overtime():
             })
     return alerts
 
-
 def check_expiring_stock():
     """Alert on raw materials expiring within 2 days."""
-    conn = sqlite3.connect(get_db_path())
-    df = pd.read_sql_query('''
+    df = query('''
         SELECT rm.batch_code, pr.name, rm.quantity_kg, rm.expiry_date,
                CAST(julianday(rm.expiry_date) - julianday('now') AS INTEGER) as days_left
         FROM raw_materials rm
@@ -123,8 +107,8 @@ def check_expiring_stock():
         WHERE rm.expiry_date <= date('now', '+2 days')
         AND rm.expiry_date >= date('now')
         ORDER BY rm.expiry_date
-    ''', conn)
-    conn.close()
+    ''')
+    
 
     alerts = []
     for _, row in df.iterrows():
@@ -137,11 +121,9 @@ def check_expiring_stock():
         })
     return alerts
 
-
 def check_order_shortfalls():
     """Alert if pending orders may not be fulfilled with current stock."""
-    conn = sqlite3.connect(get_db_path())
-    df = pd.read_sql_query('''
+    df = query('''
         SELECT o.customer, pr.name,
                SUM(o.quantity_kg) as ordered_kg,
                COALESCE((
@@ -155,8 +137,8 @@ def check_order_shortfalls():
         WHERE o.status = 'pending'
         AND o.delivery_date <= date('now', '+3 days')
         GROUP BY o.customer, pr.name
-    ''', conn)
-    conn.close()
+    ''')
+    
 
     alerts = []
     for _, row in df.iterrows():
