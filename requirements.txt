@@ -10,3 +10,4 @@ plotly>=5.18.0
 pypdf>=3.17.0
 openpyxl>=3.1.0
 ollama>=0.1.0
+pyodbc>=5.0.0

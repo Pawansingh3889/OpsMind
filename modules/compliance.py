@@ -1,49 +1,40 @@
 """Compliance and audit report generator."""
-import sqlite3
 import pandas as pd
 from datetime import datetime
-from config import DATABASE_URL, TEMP_MAX_COLD_ROOM, TEMP_MIN_COLD_ROOM
-
-
-def get_db_path():
-    url = DATABASE_URL
-    if url.startswith('sqlite:///'):
-        return url.replace('sqlite:///', '')
-    return 'data/demo.db'
-
+from modules.database import query
+from config import TEMP_MAX_COLD_ROOM, TEMP_MIN_COLD_ROOM
 
 def trace_batch(batch_code):
     """Full traceability for a batch — from raw material to customer."""
-    conn = sqlite3.connect(get_db_path())
-
+    
     # Check raw materials
-    rm = pd.read_sql_query('''
+    rm = query('''
         SELECT rm.*, pr.name as product_name
         FROM raw_materials rm
         JOIN products pr ON rm.product_id = pr.id
         WHERE rm.batch_code LIKE ?
-    ''', conn, params=[f'%{batch_code}%'])
+    ''', params=[f'%{batch_code}%'])
 
     # Check production
-    prod = pd.read_sql_query('''
+    prod = query('''
         SELECT p.*, pr.name as product_name
         FROM production p
         JOIN products pr ON p.product_id = pr.id
         WHERE p.batch_code LIKE ?
-    ''', conn, params=[f'%{batch_code}%'])
+    ''', params=[f'%{batch_code}%'])
 
     # Check orders containing this product
     orders = pd.DataFrame()
     if not prod.empty:
         product_id = prod.iloc[0]['product_id']
         prod_date = prod.iloc[0]['date']
-        orders = pd.read_sql_query('''
+        orders = query('''
             SELECT * FROM orders
             WHERE product_id = ? AND order_date >= ?
             ORDER BY order_date LIMIT 10
-        ''', conn, params=[product_id, prod_date])
+        ''', params=[product_id, prod_date])
 
-    conn.close()
+    
 
     return {
         'batch_code': batch_code,
@@ -52,11 +43,9 @@ def trace_batch(batch_code):
         'orders': orders
     }
 
-
 def get_temperature_excursions(days=7):
     """Find temperature readings outside acceptable range."""
-    conn = sqlite3.connect(get_db_path())
-    df = pd.read_sql_query('''
+    df = query('''
         SELECT location, temperature, recorded_at, recorded_by
         FROM temp_logs
         WHERE recorded_at >= date('now', ?)
@@ -66,20 +55,18 @@ def get_temperature_excursions(days=7):
             OR (location LIKE '%Dispatch%' AND temperature > 8)
         )
         ORDER BY recorded_at DESC
-    ''', conn, params=[f'-{days} days', TEMP_MAX_COLD_ROOM, TEMP_MIN_COLD_ROOM])
-    conn.close()
+    ''', params=[f'-{days} days', TEMP_MAX_COLD_ROOM, TEMP_MIN_COLD_ROOM])
+    
     return df
-
 
 def get_allergen_matrix():
     """Generate allergen matrix for all products."""
-    conn = sqlite3.connect(get_db_path())
-    df = pd.read_sql_query('''
+    df = query('''
         SELECT name, species, category, allergens
         FROM products
         ORDER BY name
-    ''', conn)
-    conn.close()
+    ''')
+    
 
     # Parse allergens into columns
     all_allergens = set()
@@ -95,19 +82,17 @@ def get_allergen_matrix():
 
     return df
 
-
 def get_compliance_score():
     """Calculate overall compliance score based on key indicators."""
     scores = {}
 
     # Temperature compliance
     excursions = get_temperature_excursions(30)
-    conn = sqlite3.connect(get_db_path())
-    total_readings = pd.read_sql_query(
+    total_readings = query(
         "SELECT COUNT(*) as cnt FROM temp_logs WHERE recorded_at >= date('now', '-30 days')",
         conn
     ).iloc[0]['cnt']
-    conn.close()
+    
 
     if total_readings > 0:
         temp_compliance = round((1 - len(excursions) / total_readings) * 100, 1)
@@ -116,13 +101,12 @@ def get_compliance_score():
     scores['Temperature Control'] = temp_compliance
 
     # Traceability (do all production runs have batch codes?)
-    conn = sqlite3.connect(get_db_path())
-    trace_df = pd.read_sql_query('''
+    trace_df = query('''
         SELECT COUNT(*) as total,
                SUM(CASE WHEN batch_code IS NOT NULL AND batch_code != '' THEN 1 ELSE 0 END) as with_batch
         FROM production WHERE date >= date('now', '-30 days')
-    ''', conn)
-    conn.close()
+    ''')
+    
     if trace_df.iloc[0]['total'] > 0:
         scores['Traceability'] = round(trace_df.iloc[0]['with_batch'] / trace_df.iloc[0]['total'] * 100, 1)
     else:
@@ -133,15 +117,13 @@ def get_compliance_score():
 
     return scores
 
-
 def generate_audit_summary(days=30):
     """Generate a summary report for BRC/HACCP audit preparation."""
     excursions = get_temperature_excursions(days)
     allergen_matrix = get_allergen_matrix()
     compliance = get_compliance_score()
 
-    conn = sqlite3.connect(get_db_path())
-    production_summary = pd.read_sql_query('''
+    production_summary = query('''
         SELECT pr.name, COUNT(*) as runs,
                ROUND(SUM(p.raw_input_kg), 0) as total_input_kg,
                ROUND(SUM(p.finished_output_kg), 0) as total_output_kg,
@@ -150,8 +132,8 @@ def generate_audit_summary(days=30):
         JOIN products pr ON p.product_id = pr.id
         WHERE p.date >= date('now', ?)
         GROUP BY pr.name ORDER BY total_input_kg DESC
-    ''', conn, params=[f'-{days} days'])
-    conn.close()
+    ''', params=[f'-{days} days'])
+    
 
     return {
         'period_days': days,

@@ -1,88 +1,72 @@
 """Waste prediction and yield optimization."""
-import sqlite3
 import pandas as pd
-from config import DATABASE_URL
+from modules.database import query as db_query
 from modules.llm import get_response
-
-
-def get_db_path():
-    url = DATABASE_URL
-    if url.startswith('sqlite:///'):
-        return url.replace('sqlite:///', '')
-    return 'data/demo.db'
-
 
 def get_yield_trends(days=30, product_name=None):
     """Get yield trends over time."""
-    conn = sqlite3.connect(get_db_path())
-    query = '''
-        SELECT p.date, pr.name as product, p.yield_pct,
+    sql_query = '''
+    SELECT p.date, pr.name as product, p.yield_pct,
                p.raw_input_kg, p.finished_output_kg, p.waste_kg
-        FROM production p
-        JOIN products pr ON p.product_id = pr.id
-        WHERE p.date >= date('now', ?)
+    FROM production p
+    JOIN products pr ON p.product_id = pr.id
+    WHERE p.date >= date('now', ?)
     '''
     params = [f'-{days} days']
     if product_name:
-        query += ' AND pr.name LIKE ?'
+        sql_query += ' AND pr.name LIKE ?'
         params.append(f'%{product_name}%')
-    query += ' ORDER BY p.date'
-    df = pd.read_sql_query(query, conn, params=params)
-    conn.close()
+    sql_query += ' ORDER BY p.date'
+    df = db_query(sql_query, params=params)
+    
     return df
-
 
 def get_waste_summary(days=7):
     """Get waste breakdown by type and reason."""
-    conn = sqlite3.connect(get_db_path())
-    df = pd.read_sql_query('''
-        SELECT w.waste_type, w.reason, SUM(w.quantity_kg) as total_kg,
+    df = db_query('''
+    SELECT w.waste_type, w.reason, SUM(w.quantity_kg) as total_kg,
                COUNT(*) as occurrences, pr.name as product
-        FROM waste_log w
-        JOIN production p ON w.production_id = p.id
-        JOIN products pr ON p.product_id = pr.id
-        WHERE w.date >= date('now', ?)
-        GROUP BY w.waste_type, w.reason, pr.name
-        ORDER BY total_kg DESC
-    ''', conn, params=[f'-{days} days'])
-    conn.close()
+    FROM waste_log w
+    JOIN production p ON w.production_id = p.id
+    JOIN products pr ON p.product_id = pr.id
+    WHERE w.date >= date('now', ?)
+    GROUP BY w.waste_type, w.reason, pr.name
+    ORDER BY total_kg DESC
+    ''', params=[f'-{days} days'])
+    
     return df
-
 
 def get_yield_by_product(days=30):
     """Get average yield by product."""
-    conn = sqlite3.connect(get_db_path())
-    df = pd.read_sql_query('''
-        SELECT pr.name as product, pr.category,
+    df = db_query('''
+    SELECT pr.name as product, pr.category,
                ROUND(AVG(p.yield_pct), 1) as avg_yield,
                ROUND(MIN(p.yield_pct), 1) as min_yield,
                ROUND(MAX(p.yield_pct), 1) as max_yield,
                ROUND(SUM(p.waste_kg), 1) as total_waste_kg,
                ROUND(SUM(p.waste_kg) * pr.unit_cost_per_kg, 2) as waste_cost_gbp,
                COUNT(*) as runs
-        FROM production p
-        JOIN products pr ON p.product_id = pr.id
-        WHERE p.date >= date('now', ?)
-        GROUP BY pr.name
-        ORDER BY avg_yield ASC
-    ''', conn, params=[f'-{days} days'])
-    conn.close()
+    FROM production p
+    JOIN products pr ON p.product_id = pr.id
+    WHERE p.date >= date('now', ?)
+    GROUP BY pr.name
+    ORDER BY avg_yield ASC
+    ''', params=[f'-{days} days'])
+    
     return df
-
 
 def predict_waste(product_name, input_kg):
     """Predict expected waste for a production run based on historical data."""
-    conn = sqlite3.connect(get_db_path())
-    df = pd.read_sql_query('''
-        SELECT AVG(p.yield_pct) as avg_yield,
+    df = db_query('''
+    SELECT AVG(p.yield_pct) as avg_yield,
                STDEV(p.yield_pct) as yield_stddev,
                AVG(p.waste_kg / p.raw_input_kg) as avg_waste_ratio
-        FROM production p
-        JOIN products pr ON p.product_id = pr.id
-        WHERE pr.name LIKE ?
-        AND p.date >= date('now', '-30 days')
-    ''', conn, params=[f'%{product_name}%'])
-    conn.close()
+    FROM production p
+    JOIN products pr ON p.product_id = pr.id
+    WHERE pr.name LIKE ?
+    AND p.date >= date('now', '-30 days')
+    ''', params=[f'%{product_name}%'])
+    
 
     if df.empty or df.iloc[0]['avg_yield'] is None:
         return None
@@ -98,7 +82,6 @@ def predict_waste(product_name, input_kg):
         'expected_yield_pct': round(avg_yield * 100, 1),
         'product': product_name
     }
-
 
 def get_ai_waste_analysis(days=7):
     """Get AI-powered waste analysis and recommendations."""
