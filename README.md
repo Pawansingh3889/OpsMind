@@ -263,7 +263,7 @@ OpsMind/
 ├── modules/
 │   ├── sql_agent.py              # NL → SQL + pre-built query fallback
 │   ├── query_library.py          # 10 tested SQL patterns
-│   ├── schema_registry.py        # Domain detection (7 domains, 147 tables)
+│   ├── schema_registry.py        # Domain detection (7 domains, 150 tables)
 │   ├── sql_dialect.py            # SQLite / SQL Server abstraction layer
 │   ├── database.py               # SQLAlchemy connection management
 │   ├── doc_search.py             # ChromaDB RAG pipeline
