@@ -1,9 +1,10 @@
-"""Natural language to SQL query agent. Uses schema registry for large databases."""
+"""Natural language to SQL query agent. Uses schema registry + pre-built query library."""
 import pandas as pd
 from sqlalchemy import text
 from modules.llm import get_response
 from modules.database import get_engine
 from modules.schema_registry import get_prompt_for_question
+from modules.query_library import find_matching_query
 
 
 EXPLAIN_PROMPT = """Explain these SQL results to a manager in 2-3 sentences. Use GBP and kg. Flag problems. Be concise."""
@@ -11,10 +12,25 @@ EXPLAIN_PROMPT = """Explain these SQL results to a manager in 2-3 sentences. Use
 
 def run_query(question):
     """Convert natural language to SQL, execute, and explain results."""
-    # Step 1: Get domain-specific SQL prompt (only relevant tables)
-    sql_prompt = get_prompt_for_question(question)
+    # Step 0: Check pre-built query library first (guaranteed correct SQL)
+    prebuilt_sql, prebuilt_desc = find_matching_query(question)
+    if prebuilt_sql:
+        sql = prebuilt_sql.strip()
+        try:
+            engine = get_engine()
+            df = pd.read_sql(sql, engine)
+            if df.empty:
+                explanation = f'{prebuilt_desc}. No data found for the current period.'
+            else:
+                data_summary = df.head(20).to_string()
+                prompt = f"Question: {question}\n\nResults:\n{data_summary}\n\nExplain:"
+                explanation = get_response(prompt, system_prompt=EXPLAIN_PROMPT)
+            return {'sql': sql, 'data': df, 'explanation': explanation, 'error': False}
+        except Exception as e:
+            return {'sql': sql, 'data': None, 'explanation': f'Query error: {e}', 'error': True}
 
-    # Step 2: Generate SQL
+    # Step 1: No pre-built match — use LLM to generate SQL
+    sql_prompt = get_prompt_for_question(question)
     sql = get_response(question, system_prompt=sql_prompt)
 
     # Clean markdown formatting

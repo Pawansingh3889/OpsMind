@@ -5,40 +5,37 @@ from modules.llm import get_response
 
 def get_yield_trends(days=30, product_name=None):
     """Get yield trends over time."""
-    sql_query = '''
+    from modules.sql_dialect import days_ago
+    sql = f"""
     SELECT p.date, pr.name as product, p.yield_pct,
                p.raw_input_kg, p.finished_output_kg, p.waste_kg
     FROM production p
     JOIN products pr ON p.product_id = pr.id
-    WHERE p.date >= date('now', ?)
-    '''
-    params = [f'-{days} days']
+    WHERE p.date >= {days_ago(days)}
+    """
     if product_name:
-        sql_query += ' AND pr.name LIKE ?'
-        params.append(f'%{product_name}%')
-    sql_query += ' ORDER BY p.date'
-    df = db_query(sql_query, params=params)
-    
-    return df
+        sql += f" AND pr.name LIKE '%{product_name}%'"
+    sql += ' ORDER BY p.date'
+    return db_query(sql)
 
 def get_waste_summary(days=7):
     """Get waste breakdown by type and reason."""
-    df = db_query('''
+    from modules.sql_dialect import days_ago
+    return db_query(f"""
     SELECT w.waste_type, w.reason, SUM(w.quantity_kg) as total_kg,
                COUNT(*) as occurrences, pr.name as product
     FROM waste_log w
     JOIN production p ON w.production_id = p.id
     JOIN products pr ON p.product_id = pr.id
-    WHERE w.date >= date('now', ?)
+    WHERE w.date >= {days_ago(days)}
     GROUP BY w.waste_type, w.reason, pr.name
     ORDER BY total_kg DESC
-    ''', params=[f'-{days} days'])
-    
-    return df
+    """)
 
 def get_yield_by_product(days=30):
     """Get average yield by product."""
-    df = db_query('''
+    from modules.sql_dialect import days_ago
+    return db_query(f"""
     SELECT pr.name as product, pr.category,
                ROUND(AVG(p.yield_pct), 1) as avg_yield,
                ROUND(MIN(p.yield_pct), 1) as min_yield,
@@ -48,24 +45,22 @@ def get_yield_by_product(days=30):
                COUNT(*) as runs
     FROM production p
     JOIN products pr ON p.product_id = pr.id
-    WHERE p.date >= date('now', ?)
-    GROUP BY pr.name
+    WHERE p.date >= {days_ago(days)}
+    GROUP BY pr.name, pr.category, pr.unit_cost_per_kg
     ORDER BY avg_yield ASC
-    ''', params=[f'-{days} days'])
-    
-    return df
+    """)
 
 def predict_waste(product_name, input_kg):
     """Predict expected waste for a production run based on historical data."""
-    df = db_query('''
+    from modules.sql_dialect import days_ago
+    df = db_query(f'''
     SELECT AVG(p.yield_pct) as avg_yield,
-               STDEV(p.yield_pct) as yield_stddev,
                AVG(p.waste_kg / p.raw_input_kg) as avg_waste_ratio
     FROM production p
     JOIN products pr ON p.product_id = pr.id
-    WHERE pr.name LIKE ?
-    AND p.date >= date('now', '-30 days')
-    ''', params=[f'%{product_name}%'])
+    WHERE pr.name LIKE '%{product_name}%'
+    AND p.date >= {days_ago(30)}
+    ''')
     
 
     if df.empty or df.iloc[0]['avg_yield'] is None:
