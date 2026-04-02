@@ -1,115 +1,340 @@
+<div align="center">
+
 # OpsMind
 
-On-premises tool that connects to a SQL database and lets you ask questions in plain English. Uses a local LLM via Ollama. No cloud, no API costs, no data leaves your machine.
+**On-Premises AI Query Tool for Manufacturing Operations**
 
-**[Documentation](https://pawansingh3889.github.io/OpsMind)**
+Query your database in plain English. Runs on your machine with Ollama.
+No cloud, no API keys, no data leaves your network.
 
-## What it does
+[![Website](https://img.shields.io/badge/Website-opsmind-0f172a?style=flat-square&logo=googlechrome&logoColor=white)](https://pawansingh3889.github.io/OpsMind/)
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white)]()
+[![Tests](https://img.shields.io/badge/Tests-36_passed-22c55e?style=flat-square&logo=pytest&logoColor=white)]()
+[![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)]()
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.30+-FF4B4B?style=flat-square&logo=streamlit&logoColor=white)]()
+[![Ollama](https://img.shields.io/badge/LLM-Ollama-000000?style=flat-square)]()
 
-- **Natural language SQL** — type a question, get a query result and explanation
-- **Document search (RAG)** — upload PDFs, search by meaning using ChromaDB
-- **Dashboard** — production, waste, yield, and order charts (Plotly)
-- **Compliance** — batch traceability, temperature excursions, allergen matrix
-- **Smart alerts** — yield drops, overtime breaches, expiring stock, order shortfalls
-- **Excel/CSV analysis** — upload a spreadsheet, ask questions about it
-- **Schema registry** — maps business domains to tables (handles 100+ table databases)
-- **Pre-built query library** — 10 common questions mapped to tested SQL
+</div>
 
-## Tech stack
+---
 
-| Component | Tool |
-|---|---|
-| LLM | Ollama (Phi3 Mini / Mistral 7B) |
-| Database | SQLAlchemy (SQLite or SQL Server) |
-| Vector Search | ChromaDB + sentence-transformers |
-| UI | Streamlit |
-| Charts | Plotly |
-| Data | Pandas |
-| Tests | pytest (36 tests) |
+## Why OpsMind?
 
-## Setup
+Most manufacturing teams query data through Excel exports, IT requests, or expensive BI tools. OpsMind connects directly to your database and lets any operator ask questions in plain English — without sending data to the cloud.
+
+| | OpsMind | Cloud AI Tools | Manual Reporting |
+|---|---|---|---|
+| Data stays on-premises | **Yes** | No | Yes |
+| Natural language queries | **Yes** | Yes | No |
+| API costs | **None** | Per-query billing | None |
+| Setup time | **< 10 minutes** | Days/weeks | N/A |
+| Works offline | **Yes** | No | Yes |
+| SQL Server + SQLite | **Both** | Varies | N/A |
+
+---
+
+## Demo
+
+<div align="center">
+<img src="docs/app-preview.png" alt="OpsMind dashboard" width="100%">
+</div>
+
+---
+
+## Key Features
+
+<table>
+<tr>
+<td width="33%" valign="top">
+
+### Natural Language SQL
+Type a question. The LLM converts it to SQL, executes it, and explains the result. Pre-built query library handles the 10 most common questions without LLM generation.
+
+</td>
+<td width="33%" valign="top">
+
+### Document Search (RAG)
+Upload PDFs. ChromaDB indexes them into vector embeddings. Ask questions like "What is the allergen procedure?" and get the relevant paragraph with source citation.
+
+</td>
+<td width="33%" valign="top">
+
+### Production Dashboard
+Output, waste, yield, and orders visualised with Plotly charts. KPIs update from live database queries. Waste cost shown in GBP.
+
+</td>
+</tr>
+<tr>
+<td width="33%" valign="top">
+
+### Compliance & Traceability
+Batch traceability by code. Temperature excursion detection. Allergen matrix generation. Compliance score calculation across all regulated parameters.
+
+</td>
+<td width="33%" valign="top">
+
+### Smart Alerts
+Checks for: yield drops vs 30-day average, temperature excursions, overtime breaches (Working Time Regulations), expiring stock, order shortfalls.
+
+</td>
+<td width="33%" valign="top">
+
+### Excel/CSV Upload
+Upload a spreadsheet and ask questions about it. Pandas handles the analysis, the LLM summarises the results. No data leaves your machine.
+
+</td>
+</tr>
+</table>
+
+---
+
+## Architecture
+
+```
+User Question
+      │
+      ▼
+┌─────────────┐     ┌──────────────────┐
+│  Query       │────▶│  Pre-built SQL    │──── Match found ───▶ Execute
+│  Library     │     │  (10 patterns)    │
+└─────────────┘     └──────────────────┘
+      │ No match
+      ▼
+┌─────────────┐     ┌──────────────────┐     ┌──────────────┐
+│  Schema      │────▶│  Select relevant  │────▶│  LLM (Ollama)│
+│  Registry    │     │  tables (4 of 147)│     │  Phi3 / Mistral│
+└─────────────┘     └──────────────────┘     └──────────────┘
+                                                     │
+                                                     ▼
+                                              ┌──────────────┐
+                                              │  SQLAlchemy   │
+                                              │  Execute SQL  │
+                                              └──────────────┘
+                                                     │
+                                              ┌──────┴──────┐
+                                              ▼             ▼
+                                         Result Table   Plotly Chart
+                                              │
+                                              ▼
+                                         LLM Explains
+                                         Result in
+                                         Plain English
+```
+
+---
+
+## Built With
+
+<div align="center">
+
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)
+![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-D71F00?style=for-the-badge&logo=sqlalchemy&logoColor=white)
+![Ollama](https://img.shields.io/badge/Ollama-000000?style=for-the-badge)
+![ChromaDB](https://img.shields.io/badge/ChromaDB-4A154B?style=for-the-badge)
+![Plotly](https://img.shields.io/badge/Plotly-3F4F75?style=for-the-badge&logo=plotly&logoColor=white)
+![Pandas](https://img.shields.io/badge/Pandas-150458?style=for-the-badge&logo=pandas&logoColor=white)
+![Pytest](https://img.shields.io/badge/Pytest-0A9EDC?style=for-the-badge&logo=pytest&logoColor=white)
+
+</div>
+
+| Layer | Tool | Purpose |
+|---|---|---|
+| LLM | Ollama (Phi3 Mini / Mistral 7B) | Natural language to SQL, result explanation |
+| Database | SQLAlchemy | Supports SQLite (demo) and SQL Server (production) |
+| Vector Search | ChromaDB + sentence-transformers | PDF document search (RAG) |
+| UI | Streamlit | Dashboard, chat interface, charts |
+| Charts | Plotly | Interactive production and waste visualisation |
+| Data | Pandas | Excel/CSV analysis, data manipulation |
+| Config | YAML | Schema registry for mapping business domains to tables |
+| Tests | pytest | 36 unit and integration tests |
+
+---
+
+## Quick Start
 
 ```bash
-# Install Ollama from https://ollama.com
+# 1. Install Ollama and pull a model
+curl -fsSL https://ollama.com/install.sh | sh
 ollama pull phi3:mini
 
-# Clone and install
+# 2. Clone, install, and seed
 git clone https://github.com/Pawansingh3889/OpsMind.git
 cd OpsMind
 pip install -r requirements.txt
+python scripts/seed_demo_db.py && python scripts/ingest_documents.py
 
-# Create demo database
-python scripts/seed_demo_db.py
-python scripts/ingest_documents.py
-
-# Run
+# 3. Run
 streamlit run app.py
 ```
 
-## Demo database
-
-The seed script creates 60 days of synthetic data:
-
-| Table | Records |
-|---|---|
-| Products | 10 |
-| Production runs | 662 |
-| Orders | 451 |
-| Temperature logs | 3,600 |
-| Raw materials | 282 |
-| Staff | 11 |
-
-## SQL Server connection
+Or use Make:
 
 ```bash
-# Set environment variable
+make setup    # Install deps + seed demo data
+make run      # Start Streamlit app
+make test     # Run 36 pytest tests
+```
+
+---
+
+## Schema Registry
+
+OpsMind handles large databases (100+ tables) by mapping business domains to specific tables. When you ask about "orders", only order-related tables are sent to the LLM — not all 147.
+
+```yaml
+# schema.yaml — 7 business domains
+traceability:
+  tables:
+    ProductionBatch: BatchID, BatchNo, ProductCode, ProductionDate
+    RawMaterialIntake: IntakeID, ProductCode, BatchNo, SupplierCode
+
+production:
+  tables:
+    ProductionRuns: RunID, ProductCode, FinishedOutputKg, WasteKg
+
+# Also: orders, temperature, staff, stock, compliance
+```
+
+---
+
+## Demo Database
+
+The seed script creates 60 days of synthetic manufacturing data:
+
+| Table | Records | Content |
+|---|---|---|
+| Products | 10 | Fish and food products with allergen data |
+| Production runs | 662 | Daily output, waste, yield percentages |
+| Sales orders | 451 | Customer orders with delivery dates |
+| Temperature logs | 3,600 | Cold chain monitoring (every 30 min) |
+| Raw materials | 282 | Supplier intake with batch traceability |
+| Staff records | 11 | Shift patterns and working hours |
+
+---
+
+## SQL Server Connection
+
+```bash
+# Connection string via environment variable
 OPSMIND_DB=mssql+pyodbc://user:pass@server/database?driver=ODBC+Driver+17+for+SQL+Server
 
-# Or Windows Auth
+# Windows Authentication
 OPSMIND_DB=mssql+pyodbc://server/database?driver=ODBC+Driver+17+for+SQL+Server&trusted_connection=yes
 ```
 
-Edit `schema.yaml` to map your table names to OpsMind's 7 business domains.
+Edit `schema.yaml` to map your actual table names to OpsMind's 7 business domains.
+
+---
 
 ## Tests
 
 ```
 $ python -m pytest tests/test_core.py -v
+
+tests/test_core.py::TestConfig::test_config_loads               PASSED
+tests/test_core.py::TestSQLDialect::test_days_ago_sqlite         PASSED
+tests/test_core.py::TestSchemaRegistry::test_detect_domain        PASSED
+tests/test_core.py::TestDatabase::test_query_returns_dataframe    PASSED
+tests/test_core.py::TestCompliance::test_trace_batch              PASSED
+tests/test_core.py::TestAlerts::test_check_all_alerts             PASSED
+tests/test_core.py::TestWastePredictor::test_predict_waste        PASSED
+tests/test_core.py::TestSQLAgentSafety::test_blocks_insert        PASSED
+tests/test_core.py::TestDocSearch::test_search_returns_list        PASSED
+... 27 more tests
+
 36 passed, 0 failed
 ```
 
-Covers: config, SQL dialect, schema registry, database queries, compliance, alerts, waste predictor, SQL safety checks, document search.
+Covers: configuration, SQL dialect abstraction, schema registry, database queries, compliance checks, alert detection, waste prediction, SQL injection prevention, document search.
 
-## Project structure
+---
+
+## Project Structure
 
 ```
 OpsMind/
-├── app.py                    # Streamlit app (7 tabs)
-├── config.py                 # Configuration
-├── schema.yaml               # Table mapping for large databases
+├── app.py                        # Streamlit app (7 tabs)
+├── config.py                     # Configuration and environment
+├── schema.yaml                   # Business domain → table mapping
+├── Makefile                      # setup, run, test, clean commands
+├── requirements.txt              # Python dependencies
+│
 ├── modules/
-│   ├── sql_agent.py          # NL to SQL + pre-built query fallback
-│   ├── query_library.py      # 10 tested SQL patterns
-│   ├── schema_registry.py    # Domain-to-table mapping
-│   ├── sql_dialect.py        # SQLite / SQL Server abstraction
-│   ├── database.py           # SQLAlchemy connection
-│   ├── doc_search.py         # ChromaDB RAG
-│   ├── compliance.py         # Traceability, allergens, audit
-│   ├── alerts.py             # 5 alert types
-│   ├── waste_predictor.py    # Yield and waste analysis
-│   └── llm.py                # Ollama connection
+│   ├── sql_agent.py              # NL → SQL + pre-built query fallback
+│   ├── query_library.py          # 10 tested SQL patterns
+│   ├── schema_registry.py        # Domain detection (7 domains, 147 tables)
+│   ├── sql_dialect.py            # SQLite / SQL Server abstraction layer
+│   ├── database.py               # SQLAlchemy connection management
+│   ├── doc_search.py             # ChromaDB RAG pipeline
+│   ├── compliance.py             # Batch tracing, allergens, audit scoring
+│   ├── alerts.py                 # 5 anomaly detection alert types
+│   ├── waste_predictor.py        # Yield trends and waste forecasting
+│   ├── excel_agent.py            # Spreadsheet upload and analysis
+│   └── llm.py                    # Ollama LLM connection
+│
 ├── tests/
-│   └── test_core.py          # 36 pytest tests
+│   └── test_core.py              # 36 pytest tests (unit + integration)
+│
 ├── scripts/
-│   ├── seed_demo_db.py       # Demo database generator
-│   └── ingest_documents.py   # Sample document loader
-└── requirements.txt
+│   ├── seed_demo_db.py           # Demo database generator (5,000+ records)
+│   └── ingest_documents.py       # PDF document loader for RAG
+│
+├── docs/
+│   ├── index.html                # Landing page (GitHub Pages)
+│   └── app-preview.png           # Application screenshot
+│
+├── .github/
+│   └── workflows/
+│       └── tests.yml             # CI: pytest on push/PR
+│
+├── CONTRIBUTING.md
+└── LICENSE
 ```
 
-## Known limitations
+---
 
-- LLM generates incorrect SQL for complex queries (~40% error rate on novel questions)
-- 10-25 second response time on 16GB RAM
-- No authentication (single-user / trusted network)
-- Read-only (SELECT queries only)
-- Demo data is synthetic, not tested on production databases
+## Roadmap
+
+- [x] Natural language to SQL with Ollama
+- [x] Pre-built query library (10 patterns)
+- [x] Schema registry for large databases
+- [x] ChromaDB document search (RAG)
+- [x] Production and waste dashboard
+- [x] Compliance module (traceability, allergens, temperature)
+- [x] Smart alerts (5 types)
+- [x] Excel/CSV upload and analysis
+- [x] SQLite and SQL Server support
+- [x] 36 pytest tests
+- [ ] Multi-user authentication
+- [ ] Query caching for repeated questions
+- [ ] Scheduled report generation
+- [ ] Slack/Teams alert forwarding
+- [ ] GPU-accelerated inference support
+- [ ] Production database validation suite
+
+---
+
+## Known Limitations
+
+| Area | Detail |
+|---|---|
+| LLM accuracy | ~60% on novel complex queries. Pre-built library handles the 10 most common questions reliably. |
+| Response time | 10–25 seconds per query on 16GB RAM. The LLM is the bottleneck. |
+| Authentication | No login system. Designed for single-user or trusted network deployment. |
+| Write protection | Read-only. Only SELECT queries are permitted — INSERT, UPDATE, DELETE are blocked. |
+| Demo data | Ships with synthetic data. Not validated against production manufacturing databases. |
+
+---
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines. Issues and pull requests are welcome.
+
+---
+
+<div align="center">
+
+**[Documentation](https://pawansingh3889.github.io/OpsMind/)** · **[Report Bug](https://github.com/Pawansingh3889/OpsMind/issues)** · **[Request Feature](https://github.com/Pawansingh3889/OpsMind/issues)**
+
+</div>
