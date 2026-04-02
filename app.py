@@ -59,19 +59,16 @@ with st.sidebar:
 
     # Quick stats
     try:
-        import sqlite3
-        from config import DATABASE_URL
-        db_path = DATABASE_URL.replace('sqlite:///', '')
-        conn = sqlite3.connect(db_path)
-        q_count = conn.execute("SELECT COUNT(*) FROM production WHERE date >= date('now', '-7 days')").fetchone()[0]
-        w_total = conn.execute("SELECT COALESCE(SUM(waste_kg), 0) FROM production WHERE date >= date('now', '-7 days')").fetchone()[0]
-        w_cost = conn.execute("SELECT COALESCE(SUM(p.waste_kg * pr.unit_cost_per_kg), 0) FROM production p JOIN products pr ON p.product_id = pr.id WHERE p.date >= date('now', '-7 days')").fetchone()[0]
-        o_pending = conn.execute("SELECT COUNT(*) FROM orders WHERE status = 'pending'").fetchone()[0]
-        conn.close()
-        st.metric("Production runs (7d)", q_count)
-        st.metric("Waste (7d)", f"{w_total:,.0f} kg")
-        st.metric("💷 Waste cost (7d)", f"GBP {w_cost:,.0f}")
-        st.metric("Pending orders", o_pending)
+        from modules.database import query as db_q, scalar
+        from modules.sql_dialect import days_ago
+        q_count = scalar(f"SELECT COUNT(*) FROM production WHERE date >= {days_ago(7)}")
+        w_total = scalar(f"SELECT COALESCE(SUM(waste_kg), 0) FROM production WHERE date >= {days_ago(7)}")
+        w_cost = scalar(f"SELECT COALESCE(SUM(p.waste_kg * pr.unit_cost_per_kg), 0) FROM production p JOIN products pr ON p.product_id = pr.id WHERE p.date >= {days_ago(7)}")
+        o_pending = scalar("SELECT COUNT(*) FROM orders WHERE status = 'pending'")
+        st.metric("Production runs (7d)", q_count or 0)
+        st.metric("Waste (7d)", f"{(w_total or 0):,.0f} kg")
+        st.metric("💷 Waste cost (7d)", f"GBP {(w_cost or 0):,.0f}")
+        st.metric("Pending orders", o_pending or 0)
     except Exception:
         st.caption("Connect database to see stats")
 
@@ -199,18 +196,14 @@ elif '📊 Dashboard' in tab:
     st.title("📊 Factory Dashboard")
 
     try:
-        import sqlite3
-        from config import DATABASE_URL
-        db_path = DATABASE_URL.replace('sqlite:///', '')
-        conn = sqlite3.connect(db_path)
+        from modules.database import query as db_q, scalar
+        from modules.sql_dialect import days_ago
 
         # KPI cards
         c1, c2, c3, c4, c5 = st.columns(5)
-        today_prod = pd.read_sql_query(
-            "SELECT COALESCE(SUM(finished_output_kg), 0) as output, COALESCE(SUM(waste_kg), 0) as waste, COALESCE(AVG(yield_pct), 0) as yield_avg FROM production WHERE date >= date('now', '-1 day')", conn)
-        today_cost = pd.read_sql_query(
-            "SELECT COALESCE(SUM(p.waste_kg * pr.unit_cost_per_kg), 0) as cost FROM production p JOIN products pr ON p.product_id = pr.id WHERE p.date >= date('now', '-1 day')", conn)
-        pending = conn.execute("SELECT COUNT(*) FROM orders WHERE status='pending'").fetchone()[0]
+        today_prod = db_q(f"SELECT COALESCE(SUM(finished_output_kg), 0) as output, COALESCE(SUM(waste_kg), 0) as waste, COALESCE(AVG(yield_pct), 0) as yield_avg FROM production WHERE date >= {days_ago(1)}")
+        today_cost = db_q(f"SELECT COALESCE(SUM(p.waste_kg * pr.unit_cost_per_kg), 0) as cost FROM production p JOIN products pr ON p.product_id = pr.id WHERE p.date >= {days_ago(1)}")
+        pending = scalar("SELECT COUNT(*) FROM orders WHERE status='pending'") or 0
 
         c1.metric("Today's Output", f"{today_prod.iloc[0]['output']:,.0f} kg")
         c2.metric("Today's Waste", f"{today_prod.iloc[0]['waste']:,.0f} kg")
@@ -219,9 +212,7 @@ elif '📊 Dashboard' in tab:
         c5.metric("Pending Orders", pending)
 
         # Monthly money lost
-        monthly = pd.read_sql_query(
-            "SELECT COALESCE(SUM(p.waste_kg * pr.unit_cost_per_kg), 0) as cost FROM production p JOIN products pr ON p.product_id = pr.id WHERE p.date >= date('now', '-30 days')", conn)
-        monthly_cost = monthly.iloc[0]['cost']
+        monthly_cost = scalar(f"SELECT COALESCE(SUM(p.waste_kg * pr.unit_cost_per_kg), 0) FROM production p JOIN products pr ON p.product_id = pr.id WHERE p.date >= {days_ago(30)}") or 0
         annual_projected = monthly_cost * 12
         st.markdown(f"""
         <div style="background:linear-gradient(135deg,#fef2f2,#fee2e2);border:1px solid #fca5a5;border-radius:12px;padding:1.2rem;margin-bottom:1.5rem;display:flex;justify-content:space-between;align-items:center;">
@@ -235,12 +226,12 @@ elif '📊 Dashboard' in tab:
 
         # Production trend
         st.subheader("Production Trend (30 days)")
-        trend = pd.read_sql_query('''
+        trend = db_q(f"""
             SELECT date, SUM(finished_output_kg) as output_kg, SUM(waste_kg) as waste_kg,
                    ROUND(AVG(yield_pct), 1) as avg_yield
-            FROM production WHERE date >= date('now', '-30 days')
+            FROM production WHERE date >= {days_ago(30)}
             GROUP BY date ORDER BY date
-        ''', conn)
+        """)
         if not trend.empty:
             fig = go.Figure()
             fig.add_trace(go.Bar(x=trend['date'], y=trend['output_kg'], name='Output (kg)', marker_color='#005eb8'))
@@ -252,11 +243,11 @@ elif '📊 Dashboard' in tab:
         col1, col2 = st.columns(2)
         with col1:
             st.subheader("Orders by Customer (30d)")
-            cust = pd.read_sql_query('''
+            cust = db_q(f"""
                 SELECT customer, SUM(quantity_kg) as total_kg, COUNT(*) as order_count
-                FROM orders WHERE order_date >= date('now', '-30 days')
+                FROM orders WHERE order_date >= {days_ago(30)}
                 GROUP BY customer ORDER BY total_kg DESC
-            ''', conn)
+            """)
             if not cust.empty:
                 fig = px.pie(cust, values='total_kg', names='customer', hole=0.4)
                 fig.update_layout(height=300)
@@ -272,7 +263,6 @@ elif '📊 Dashboard' in tab:
                 fig.update_layout(height=300)
                 st.plotly_chart(fig, use_container_width=True)
 
-        conn.close()
     except Exception as e:
         st.error(f"Database error: {e}. Run `python scripts/seed_demo_db.py` to create the demo database.")
 
