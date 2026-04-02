@@ -1,17 +1,14 @@
 """Shared database connection for OpsMind. Supports SQLite and SQL Server."""
 import pandas as pd
+import streamlit as st
 from sqlalchemy import create_engine, text
 from config import DATABASE_URL, DB_TYPE
 
-_engine = None
 
-
+@st.cache_resource
 def get_engine():
-    """Get or create cached SQLAlchemy engine."""
-    global _engine
-    if _engine is None:
-        _engine = create_engine(DATABASE_URL, echo=False)
-    return _engine
+    """Get or create cached SQLAlchemy engine (cached across Streamlit reruns)."""
+    return create_engine(DATABASE_URL, echo=False)
 
 
 def query(sql, params=None):

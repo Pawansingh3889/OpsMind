@@ -1,10 +1,19 @@
 """Natural language to SQL query agent. Uses schema registry + pre-built query library."""
+import hashlib
 import pandas as pd
+import streamlit as st
 from sqlalchemy import text
 from modules.llm import get_response
 from modules.database import get_engine
 from modules.schema_registry import get_prompt_for_question
 from modules.query_library import find_matching_query
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def _cached_sql_query(sql):
+    """Cache SQL query results for 5 minutes to avoid re-running identical queries."""
+    engine = get_engine()
+    return pd.read_sql(sql, engine)
 
 
 EXPLAIN_PROMPT = """Explain these SQL results to a manager in 2-3 sentences. Use GBP and kg. Flag problems. Be concise."""
@@ -17,8 +26,7 @@ def run_query(question):
     if prebuilt_sql:
         sql = prebuilt_sql.strip()
         try:
-            engine = get_engine()
-            df = pd.read_sql(sql, engine)
+            df = _cached_sql_query(sql)
             if df.empty:
                 explanation = f'{prebuilt_desc}. No data found for the current period.'
             else:
