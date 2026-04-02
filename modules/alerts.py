@@ -1,7 +1,9 @@
-"""Smart alerts and anomaly detection for factory operations."""
+"""Smart alerts and anomaly detection for operations."""
 import pandas as pd
 from modules.database import query
+from modules.sql_dialect import days_ago, days_ahead, days_until
 from config import YIELD_DROP_THRESHOLD, MAX_WEEKLY_HOURS
+
 
 def check_all_alerts():
     """Run all alert checks and return a list of active alerts."""
@@ -13,23 +15,25 @@ def check_all_alerts():
     alerts.extend(check_order_shortfalls())
     return sorted(alerts, key=lambda a: {'critical': 0, 'warning': 1, 'info': 2}[a['level']])
 
+
 def check_yield_drops():
     """Alert if any product's yield dropped significantly vs 30-day average."""
-    df = query('''
+    df = query(f"""
         SELECT pr.name, pr.unit_cost_per_kg,
-               ROUND(AVG(CASE WHEN p.date >= date('now', '-7 days') THEN p.yield_pct END), 1) as this_week,
-               ROUND(AVG(CASE WHEN p.date >= date('now', '-30 days') THEN p.yield_pct END), 1) as monthly_avg,
-               COALESCE(SUM(CASE WHEN p.date >= date('now', '-7 days') THEN p.waste_kg END), 0) as week_waste_kg
+               ROUND(AVG(CASE WHEN p.date >= {days_ago(7)} THEN p.yield_pct END), 1) as this_week,
+               ROUND(AVG(CASE WHEN p.date >= {days_ago(30)} THEN p.yield_pct END), 1) as monthly_avg,
+               COALESCE(SUM(CASE WHEN p.date >= {days_ago(7)} THEN p.waste_kg END), 0) as week_waste_kg
         FROM production p
         JOIN products pr ON p.product_id = pr.id
-        WHERE p.date >= date('now', '-30 days')
-        GROUP BY pr.name
-        HAVING this_week IS NOT NULL AND monthly_avg IS NOT NULL
-    ''')
-    
+        WHERE p.date >= {days_ago(30)}
+        GROUP BY pr.name, pr.unit_cost_per_kg
+        HAVING AVG(CASE WHEN p.date >= {days_ago(7)} THEN p.yield_pct END) IS NOT NULL
+    """)
 
     alerts = []
     for _, row in df.iterrows():
+        if row['monthly_avg'] is None or row['this_week'] is None:
+            continue
         drop = row['monthly_avg'] - row['this_week']
         if drop > YIELD_DROP_THRESHOLD:
             waste_cost = row['week_waste_kg'] * row['unit_cost_per_kg']
@@ -37,25 +41,24 @@ def check_yield_drops():
                 'level': 'warning',
                 'icon': 'chart-line-down',
                 'title': f"Yield drop on {row['name']} — GBP {waste_cost:,.0f} lost this week",
-                'message': f"This week: {row['this_week']}% vs 30-day avg: {row['monthly_avg']}% (down {drop:.1f}%). Waste cost this week: GBP {waste_cost:,.0f}.",
+                'message': f"This week: {row['this_week']}% vs 30-day avg: {row['monthly_avg']}% (down {drop:.1f}%). Waste cost: GBP {waste_cost:,.0f}.",
                 'category': 'yield'
             })
     return alerts
 
+
 def check_temperature_excursions():
     """Alert on recent temperature excursions."""
-    df = query('''
+    df = query(f"""
         SELECT location, temperature, recorded_at
         FROM temp_logs
-        WHERE recorded_at >= date('now', '-1 day')
+        WHERE recorded_at >= {days_ago(1)}
         AND (
             (location LIKE '%Cold Room%' AND temperature > 5)
             OR (location LIKE '%Freezer%' AND temperature > -15)
         )
         ORDER BY recorded_at DESC
-        LIMIT 5
-    ''')
-    
+    """)
 
     alerts = []
     for _, row in df.iterrows():
@@ -68,14 +71,15 @@ def check_temperature_excursions():
         })
     return alerts
 
+
 def check_overtime():
     """Alert if staff are approaching or exceeding Working Time Regulations limits."""
-    df = query(f'''
+    threshold = MAX_WEEKLY_HOURS - 4
+    df = query(f"""
         SELECT name, role, hours_this_week, shift_pattern
         FROM staff
-        WHERE hours_this_week > {MAX_WEEKLY_HOURS - 4}
-    ''')
-    
+        WHERE hours_this_week > {threshold}
+    """)
 
     alerts = []
     for _, row in df.iterrows():
@@ -97,18 +101,18 @@ def check_overtime():
             })
     return alerts
 
+
 def check_expiring_stock():
     """Alert on raw materials expiring within 2 days."""
-    df = query('''
+    df = query(f"""
         SELECT rm.batch_code, pr.name, rm.quantity_kg, rm.expiry_date,
-               CAST(julianday(rm.expiry_date) - julianday('now') AS INTEGER) as days_left
+               {days_until('rm.expiry_date')} as days_left
         FROM raw_materials rm
         JOIN products pr ON rm.product_id = pr.id
-        WHERE rm.expiry_date <= date('now', '+2 days')
-        AND rm.expiry_date >= date('now')
+        WHERE rm.expiry_date <= {days_ahead(2)}
+        AND rm.expiry_date >= {days_ago(0)}
         ORDER BY rm.expiry_date
-    ''')
-    
+    """)
 
     alerts = []
     for _, row in df.iterrows():
@@ -121,24 +125,24 @@ def check_expiring_stock():
         })
     return alerts
 
+
 def check_order_shortfalls():
     """Alert if pending orders may not be fulfilled with current stock."""
-    df = query('''
+    df = query(f"""
         SELECT o.customer, pr.name,
                SUM(o.quantity_kg) as ordered_kg,
                COALESCE((
                    SELECT SUM(rm2.quantity_kg)
                    FROM raw_materials rm2
                    WHERE rm2.product_id = o.product_id
-                   AND rm2.expiry_date > date('now')
+                   AND rm2.expiry_date > {days_ago(0)}
                ), 0) as available_kg
         FROM orders o
         JOIN products pr ON o.product_id = pr.id
         WHERE o.status = 'pending'
-        AND o.delivery_date <= date('now', '+3 days')
-        GROUP BY o.customer, pr.name
-    ''')
-    
+        AND o.delivery_date <= {days_ahead(3)}
+        GROUP BY o.customer, pr.name, o.product_id
+    """)
 
     alerts = []
     for _, row in df.iterrows():
@@ -148,7 +152,7 @@ def check_order_shortfalls():
                 'level': 'critical',
                 'icon': 'box-open',
                 'title': f"Order shortfall: {row['customer']}",
-                'message': f"Need {row['ordered_kg']}kg {row['name']} but only {row['available_kg']}kg available. Short by {shortfall:.0f}kg.",
+                'message': f"Need {row['ordered_kg']:.0f}kg {row['name']} but only {row['available_kg']:.0f}kg available. Short by {shortfall:.0f}kg.",
                 'category': 'orders'
             })
     return alerts

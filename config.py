@@ -28,7 +28,11 @@ CHROMA_DIR = os.getenv("OPSMIND_CHROMA_DIR", "data/chroma_store")
 # App
 APP_NAME = "OpsMind"
 APP_TAGLINE = "The AI Brain for Your Operations"
-VERSION = "0.2.0"
+VERSION = "0.3.0"
+
+# Schema
+SCHEMA_CONFIG = os.getenv("SCHEMA_CONFIG", "schema.yaml")
+SCHEMA_MODE = os.getenv("SCHEMA_MODE", "auto")  # "auto" or "mapped"
 
 # Alerts
 YIELD_DROP_THRESHOLD = 5.0  # Alert if yield drops more than 5% vs average
