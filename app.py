@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 import os
 import sys
 import tempfile
+import hmac
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(__file__))
@@ -32,6 +33,32 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+
+# === AUTHENTICATION ===
+def check_password():
+    """Gate access with password authentication. Configure in .streamlit/secrets.toml."""
+    if not hasattr(st, 'secrets') or 'password' not in st.secrets:
+        return True  # No password configured — allow access (dev mode)
+
+    if st.session_state.get('authenticated'):
+        return True
+
+    st.markdown(f"## 🏭 {APP_NAME}")
+    st.caption("Enter password to access the dashboard.")
+    password = st.text_input("Password", type="password", key="password_input")
+    if st.button("Log in", type="primary"):
+        if hmac.compare_digest(password, st.secrets["password"]):
+            st.session_state['authenticated'] = True
+            st.rerun()
+        else:
+            st.error("Incorrect password.")
+    return False
+
+
+if not check_password():
+    st.stop()
+
 
 # === SESSION STATE ===
 if 'chat_history' not in st.session_state:

@@ -306,8 +306,8 @@ OpsMind/
 - [x] Excel/CSV upload and analysis
 - [x] SQLite and SQL Server support
 - [x] 36 pytest tests
-- [ ] Multi-user authentication
-- [ ] Query caching for repeated questions
+- [x] Password authentication (Streamlit secrets)
+- [x] Query caching (5-minute TTL on SQL results + cached DB engine)
 - [ ] Scheduled report generation
 - [ ] Slack/Teams alert forwarding
 - [ ] GPU-accelerated inference support
@@ -321,7 +321,7 @@ OpsMind/
 |---|---|
 | LLM accuracy | ~60% on novel complex queries. Pre-built library handles the 10 most common questions reliably. |
 | Response time | 10–25 seconds per query on 16GB RAM. The LLM is the bottleneck. |
-| Authentication | No login system. Designed for single-user or trusted network deployment. |
+| Authentication | Password-based via Streamlit secrets. Configure in `.streamlit/secrets.toml`. No multi-user roles. |
 | Write protection | Read-only. Only SELECT queries are permitted — INSERT, UPDATE, DELETE are blocked. |
 | Demo data | Ships with synthetic data. Not validated against production manufacturing databases. |
 
