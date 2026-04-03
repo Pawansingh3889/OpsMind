@@ -1,0 +1,36 @@
+name: Feature Request
+description: Suggest a new feature or improvement
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What problem does this solve?
+      placeholder: I need to... / It would be useful if...
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: How should it work?
+    validations:
+      required: false
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - SQL queries
+        - Document search (RAG)
+        - Dashboard
+        - Compliance
+        - Alerts
+        - Excel/CSV upload
+        - Authentication
+        - Performance
+        - Other
+    validations:
+      required: true
