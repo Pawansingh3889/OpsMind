@@ -213,9 +213,14 @@ if __name__ == "__main__":
 
     # Check which models are available
     try:
-        available = [m["name"] for m in ollama.list()["models"]]
-    except Exception:
-        print("ERROR: Ollama is not running. Start it with: ollama serve")
+        result = ollama.list()
+        if isinstance(result, dict):
+            available = [m["name"] for m in result.get("models", [])]
+        else:
+            available = [m.model for m in result.models] if hasattr(result, 'models') else [m["name"] for m in result]
+    except Exception as e:
+        print(f"ERROR: Cannot connect to Ollama: {e}")
+        print("Make sure Ollama is running: ollama serve")
         sys.exit(1)
 
     print("OpsMind Model Benchmark")
