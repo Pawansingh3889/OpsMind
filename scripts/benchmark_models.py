@@ -209,7 +209,7 @@ def print_summary(all_results):
 
 
 if __name__ == "__main__":
-    models = ["phi3:mini", "llama3.1:8b"]
+    models = ["phi3:mini", "llama3.1:8b", "qwen3:4b", "gemma3:4b"]
 
     # Check which models are available
     try:
