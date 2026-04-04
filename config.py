@@ -2,7 +2,7 @@
 import os
 
 # LLM
-OLLAMA_MODEL = os.getenv("OPSMIND_MODEL", "phi3:mini")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "opsmind")
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 
 # Database
