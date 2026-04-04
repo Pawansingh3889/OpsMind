@@ -347,4 +347,12 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines. Issues and pull requests 
 
 **[Documentation](https://pawansingh3889.github.io/OpsMind/)** · **[Report Bug](https://github.com/Pawansingh3889/OpsMind/issues)** · **[Request Feature](https://github.com/Pawansingh3889/OpsMind/issues)**
 
+---
+
+### Built by [Pawan Singh Kapkoti](https://pawansingh3889.github.io)
+
+Data & Analytics Engineer · Available for freelance and full-time roles.
+
+[![Hire Me](https://img.shields.io/badge/Hire_Me-22c55e?style=for-the-badge)](mailto:pawankapkoti3889@gmail.com) [![LinkedIn](https://img.shields.io/badge/LinkedIn-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/pawan-singh-kapkoti-100176347) [![Upwork](https://img.shields.io/badge/Upwork-6fda44?style=for-the-badge&logo=upwork&logoColor=white)](https://www.upwork.com/freelancers/pawansingh3889)
+
 </div>
