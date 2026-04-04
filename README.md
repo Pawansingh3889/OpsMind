@@ -31,6 +31,16 @@ Most manufacturing teams query data through Excel exports, IT requests, or expen
 | Works offline | **Yes** | No | Yes |
 | SQL Server + SQLite | **Both** | Varies | N/A |
 
+### Why direct Ollama — not MCP?
+
+OpsMind calls Ollama's API directly rather than going through an MCP (Model Context Protocol) orchestration layer. This is a deliberate design choice:
+
+- **Fewer moving parts.** The target environment is a factory floor with limited IT support. Direct integration means the dependency chain is just `pip install` + `ollama pull` — no agent framework, no orchestration server, no extra config.
+- **Single-user, single-tool.** MCP shines when multiple agents need to share the same database connection or tool registry. OpsMind is a standalone app where one user asks one question at a time. MCP would add complexity without adding value here.
+- **Latency.** Every extra hop between the user's question and the LLM adds response time. On 16GB hardware where queries already take 10–25 seconds, keeping the path short matters.
+
+If OpsMind evolves into a multi-agent system (e.g. one agent for SQL, another for document search, another for alerts), MCP would become the right architecture. For now, simplicity wins.
+
 ---
 
 ## Demo
