@@ -1,37 +1,245 @@
+<div align="center">
+
 # OpsMind
 
-On-premises AI assistant for food manufacturing. Natural language to SQL, RAG document search, compliance dashboards.
+**AI query tool for manufacturing — runs on your machine, not the cloud**
 
-Runs entirely on Ollama. No data leaves the building.
+[![Docs](https://img.shields.io/badge/Docs-Website-0f172a?style=flat-square&logo=googlechrome&logoColor=white)](https://pawansingh3889.github.io/OpsMind/)
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white)]()
+[![Tests](https://img.shields.io/badge/Tests-36_passed-22c55e?style=flat-square&logo=pytest&logoColor=white)]()
+[![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)]()
 
-\`\`\`
-stack     = ["Python", "Ollama", "ChromaDB", "LangChain", "Streamlit", "SQLAlchemy", "Kafka"]
-tests     = 36
-ai_model  = "local"
-\`\`\`
-
-[Documentation](https://pawansingh3889.github.io/OpsMind/)
+</div>
 
 ---
 
-## What it does
-
-**NL-to-SQL** — ask questions in plain English, get SQL executed against your production database
-
-**RAG Search** — upload SOPs and HACCP plans, search with natural language via ChromaDB
-
-**Kafka Streaming** — real-time sensor data consumer with threshold-based alerting
+Manufacturing teams query data through Excel exports and IT requests. OpsMind lets any operator ask the database in English — offline, on-prem, no API keys.
 
 ---
 
-## Quick start
+## See it run
 
-\`\`\`bash
+<div align="center">
+<img src="docs/app-preview.png" alt="OpsMind dashboard" width="100%">
+</div>
+
+```
+$ ollama pull phi3:mini
+$ streamlit run app.py
+
+┌─────────────────────────────────────────────────┐
+│ OpsMind — 7 tabs loaded                         │
+│                                                 │
+│ > "What was the yield for cod fillets last week?"│
+│                                                 │
+│ Detecting domain... production (2 tables)       │
+│ Generating SQL...                               │
+│ SELECT ProductCode, AVG(YieldPercent)            │
+│   FROM ProductionRuns                           │
+│   WHERE ProductCode = 'COD-F'                   │
+│   AND ProductionDate >= date('now', '-7 days')  │
+│   GROUP BY ProductCode;                         │
+│                                                 │
+│ ┌──────────┬──────────────┐                     │
+│ │ Product  │ Avg Yield %  │                     │
+│ ├──────────┼──────────────┤                     │
+│ │ COD-F    │ 94.2%        │                     │
+│ └──────────┴──────────────┘                     │
+│                                                 │
+│ "Cod fillet yield averaged 94.2% last week,     │
+│  which is 1.8% above your 30-day average."      │
+└─────────────────────────────────────────────────┘
+```
+
+---
+
+## How it works
+
+```
+User asks: "What was yesterday's waste?"
+      │
+      ▼
+┌─────────────┐     ┌──────────────────┐
+│ Query Library│────▶│ 10 pre-built SQL │──── Match? ───▶ Execute instantly
+│ (fast path)  │     │ patterns          │
+└─────────────┘     └──────────────────┘
+      │ No match
+      ▼
+┌─────────────┐     ┌──────────────────┐     ┌──────────────┐
+│ Schema       │────▶│ Pick 4 tables    │────▶│ Ollama LLM   │
+│ Registry     │     │ from 147         │     │ (Phi3/Mistral)│
+│ (7 domains)  │     │ (domain match)   │     │              │
+└─────────────┘     └──────────────────┘     └──────────────┘
+                                                    │
+                                                    ▼
+                                             ┌──────────────┐
+                                             │ SQLAlchemy    │
+                                             │ execute       │
+                                             └──────────────┘
+                                                    │
+                                             ┌──────┴──────┐
+                                             ▼             ▼
+                                        Result Table   Plotly Chart
+                                             │
+                                             ▼
+                                        LLM explains in
+                                        plain English
+```
+
+**Step 1 — Domain detection.** User asks about "orders" → schema registry maps it to 2 tables out of 147. Only those go to the LLM.
+
+**Step 2 — SQL generation.** Ollama converts the question to SQL. Pre-built library short-circuits the 10 most common questions.
+
+**Step 3 — Execution.** SQLAlchemy runs the query (read-only — INSERT/UPDATE/DELETE blocked). Result rendered as table + Plotly chart.
+
+**Step 4 — Explanation.** LLM summarises the result in English with context ("above average", "trending down").
+
+---
+
+## All 7 modules in action
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  TAB 1: SQL Chat                                            │
+│  "How many orders shipped late this month?"                 │
+│  → 12 orders, 3.4% of total. Worst day: Tuesday 18th.     │
+│                                                             │
+│  TAB 2: Document Search (RAG)                               │
+│  Upload: allergen-procedure-v3.pdf                          │
+│  "What's the allergen cleaning protocol?"                   │
+│  → "Section 4.2: All surfaces must be cleaned with..."     │
+│  → Source: allergen-procedure-v3.pdf, page 8               │
+│                                                             │
+│  TAB 3: Production Dashboard                                │
+│  Output: 2,841 kg  │ Waste: 187 kg  │ Yield: 93.8%        │
+│  Orders: 38 open   │ Shipped: 412   │ Late: 12            │
+│                                                             │
+│  TAB 4: Compliance & Traceability                           │
+│  Batch COD-2024-0847:                                       │
+│    Raw material → Supplier ABC, intake 06:12                │
+│    Production → Line 2, yield 95.1%                         │
+│    Despatch → Customer XYZ, temp 2.1°C ✓                   │
+│                                                             │
+│  TAB 5: Smart Alerts                                        │
+│  ⚠ Yield drop: Haddock -4.2% vs 30-day avg                │
+│  ⚠ Cold Room 2: 5.3°C (threshold: 5.0°C)                  │
+│  ⚠ 3 batches expiring within 48 hours                      │
+│                                                             │
+│  TAB 6: Excel Upload                                        │
+│  Uploaded: march-production.xlsx (340 rows)                 │
+│  "What product had the most waste?"                         │
+│  → Salmon fillets: 42kg waste (8.1% of output)             │
+│                                                             │
+│  TAB 7: Schema Registry                                     │
+│  7 domains │ 147 tables │ 4 selected for current query     │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Build it
+
+```bash
+# Step 1: Get Ollama running
+curl -fsSL https://ollama.com/install.sh | sh
+ollama pull phi3:mini       # 2.3 GB, runs on 8GB RAM
+ollama pull mistral:7b      # optional, better accuracy
+
+# Step 2: Clone and install
+git clone https://github.com/Pawansingh3889/OpsMind.git
+cd OpsMind
 pip install -r requirements.txt
-ollama pull llama3.1
+
+# Step 3: Seed demo data (60 days of synthetic manufacturing data)
+python scripts/seed_demo_db.py
+# → Products: 10 | Runs: 662 | Orders: 451 | Temp logs: 3,600 | Materials: 282
+
+# Step 4: Index documents for RAG search
+python scripts/ingest_documents.py
+# → Indexing PDFs into ChromaDB vectors...
+
+# Step 5: Run
 streamlit run app.py
-\`\`\`
+# → OpsMind running at http://localhost:8501
+```
 
-## Why on-prem?
+Or one-liner: `make setup && make run`
 
-Food manufacturing is regulated. Sending production data to cloud APIs is a compliance risk. Ollama runs locally.
+---
+
+## Run the tests
+
+```
+$ make test
+
+tests/test_core.py::TestConfig::test_config_loads               PASSED
+tests/test_core.py::TestSQLDialect::test_days_ago_sqlite         PASSED
+tests/test_core.py::TestSchemaRegistry::test_detect_domain        PASSED
+tests/test_core.py::TestDatabase::test_query_returns_dataframe    PASSED
+tests/test_core.py::TestCompliance::test_trace_batch              PASSED
+tests/test_core.py::TestAlerts::test_check_all_alerts             PASSED
+tests/test_core.py::TestWastePredictor::test_predict_waste        PASSED
+tests/test_core.py::TestSQLAgentSafety::test_blocks_insert        PASSED
+tests/test_core.py::TestDocSearch::test_search_returns_list        PASSED
+... 27 more tests
+
+36 passed, 0 failed
+```
+
+Covers: config, SQL dialect abstraction, schema registry, database queries, compliance checks, alert detection, waste prediction, SQL injection prevention, document search.
+
+---
+
+## Connect to production SQL Server
+
+```bash
+# Environment variable — connection string
+OPSMIND_DB=mssql+pyodbc://user:pass@server/database?driver=ODBC+Driver+17+for+SQL+Server
+
+# Windows Auth
+OPSMIND_DB=mssql+pyodbc://server/database?driver=ODBC+Driver+17+for+SQL+Server&trusted_connection=yes
+```
+
+Then edit `schema.yaml` to map your tables to OpsMind's 7 business domains:
+
+```yaml
+traceability:
+  tables:
+    ProductionBatch: BatchID, BatchNo, ProductCode, ProductionDate
+    RawMaterialIntake: IntakeID, ProductCode, BatchNo, SupplierCode
+
+production:
+  tables:
+    ProductionRuns: RunID, ProductCode, FinishedOutputKg, WasteKg
+
+# Also: orders, temperature, staff, stock, compliance
+```
+
+---
+
+## Stack
+
+| Layer | Tool | What it does |
+|---|---|---|
+| LLM | Ollama (Phi3 Mini / Mistral 7B) | English → SQL, result explanation |
+| Database | SQLAlchemy | SQLite (demo) + SQL Server (production) |
+| Vector Search | ChromaDB + sentence-transformers | PDF search (RAG) |
+| UI | Streamlit (7 tabs) | Dashboard, chat, charts |
+| Charts | Plotly | Production and waste visualisation |
+| Config | YAML | Schema registry — 7 domains, 147 tables |
+| Tests | pytest | 36 unit + integration tests |
+
+---
+
+## Limitations
+
+| Area | Reality |
+|---|---|
+| LLM accuracy | ~60% on novel complex queries. Pre-built library handles top 10 questions reliably. |
+| Speed | 10-25 sec per query on 16GB RAM. LLM is the bottleneck. |
+| Auth | Password via Streamlit secrets. No multi-user roles. |
+| Safety | Read-only. SELECT only — INSERT/UPDATE/DELETE blocked. |
+
+---
+
+**[Docs](https://pawansingh3889.github.io/OpsMind/)** &#183; **[Report Bug](https://github.com/Pawansingh3889/OpsMind/issues)** &#183; **[Request Feature](https://github.com/Pawansingh3889/OpsMind/issues)**
