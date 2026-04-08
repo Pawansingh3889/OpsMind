@@ -1,0 +1,6 @@
+repos:
+  - repo: https://github.com/Pawansingh3889/sql-guard
+    rev: main
+    hooks:
+      - id: sql-sop
+        args: [--severity, error]
