@@ -204,6 +204,161 @@ QUERY_LIBRARY = [
         """,
         "description": "Supplier deliveries (last 30 days)",
     },
+    # --- Production ERP queries ---
+    {
+        "patterns": [
+            r"yield.*(line|production line)",
+            r"(line|production line).*yield",
+            r"(line|production).*output",
+        ],
+        "sql": lambda: f"""
+            SELECT r.production_date, pl.line_name, pl.line_type,
+                   COUNT(*) as runs,
+                   ROUND(SUM(r.target_qty_kg), 0) as target_kg,
+                   ROUND(SUM(r.actual_qty_kg), 0) as actual_kg,
+                   ROUND(SUM(r.waste_kg), 0) as waste_kg,
+                   ROUND(AVG(r.yield_pct), 1) as avg_yield_pct
+            FROM prod_runs r
+            JOIN prod_lines pl ON r.prod_line = pl.line_id
+            WHERE r.status = 'complete'
+              AND r.production_date >= {days_ago(7)}
+            GROUP BY r.production_date, pl.line_name, pl.line_type
+            ORDER BY r.production_date DESC, avg_yield_pct ASC
+        """,
+        "description": "Yield by production line (last 7 days)",
+    },
+    {
+        "patterns": [
+            r"trace.*(batch|BC-)",
+            r"where.*(fish|cod|salmon|haddock).*(come|from|origin)",
+            r"(batch|trace).*lookup",
+            r"(vessel|catch area|supplier).*batch",
+        ],
+        "sql": lambda: """
+            SELECT r.run_number, r.production_date,
+                   pp.description as product, pp.customer,
+                   t.batch_code, t.supplier, t.species,
+                   t.catch_area, t.catch_method, t.vessel_name,
+                   t.landing_date, t.country_origin, t.certified
+            FROM prod_runs r
+            JOIN prod_products pp ON r.product_code = pp.product_code
+            JOIN prod_traceability t ON r.trace_id = t.trace_id
+            ORDER BY r.production_date DESC
+            LIMIT 20
+        """,
+        "description": "Traceability chain: run to catch vessel",
+    },
+    {
+        "patterns": [
+            r"(temp|temperature).*(breach|excursion|out of range|alert)",
+            r"(chiller|freezer).*(breach|alert|problem)",
+            r"breach.*(temp|temperature)",
+        ],
+        "sql": lambda: f"""
+            SELECT tl.reading_time, tl.location,
+                   tl.temp_celsius, tl.target_max,
+                   ROUND(tl.temp_celsius - tl.target_max, 1) as degrees_over,
+                   tl.recorded_by
+            FROM prod_temperature_logs tl
+            WHERE tl.in_range = 0
+              AND tl.reading_time >= {days_ago(7)}
+            ORDER BY tl.reading_time DESC
+        """,
+        "description": "Temperature breaches (last 7 days)",
+    },
+    {
+        "patterns": [
+            r"allergen.*(line|changeover|clear)",
+            r"line clear",
+            r"(wheat|egg|milk|mustard).*(line|product)",
+        ],
+        "sql": lambda: f"""
+            SELECT r.run_number, r.production_date,
+                   pl.line_name, pp.description, pp.allergens,
+                   r.created_by as operator
+            FROM prod_runs r
+            JOIN prod_products pp ON r.product_code = pp.product_code
+            JOIN prod_lines pl ON r.prod_line = pl.line_id
+            WHERE r.production_date >= {days_ago(3)}
+            ORDER BY r.prod_line, r.created_date
+        """,
+        "description": "Allergen changeover sequence (last 3 days)",
+    },
+    {
+        "patterns": [
+            r"(shift|day|night).*(productivity|kg per head|output)",
+            r"(productivity|kg per head).*(shift|day|night)",
+            r"day.*vs.*night",
+        ],
+        "sql": lambda: f"""
+            SELECT s.shift_code,
+                   COUNT(*) as total_shifts,
+                   ROUND(AVG(s.headcount), 0) as avg_headcount,
+                   ROUND(AVG(s.output_kg), 0) as avg_output_kg,
+                   ROUND(AVG(s.kg_per_head), 1) as avg_kg_per_head,
+                   ROUND(AVG(s.overtime_hours), 1) as avg_overtime_hrs
+            FROM prod_shifts s
+            WHERE s.shift_date >= {days_ago(14)}
+            GROUP BY s.shift_code
+        """,
+        "description": "Shift productivity comparison (last 14 days)",
+    },
+    {
+        "patterns": [
+            r"giveaway",
+            r"overweight.*(product|analysis)",
+            r"(product|plu).*waste",
+        ],
+        "sql": lambda: f"""
+            SELECT pp.description, pp.customer, pp.pack_size_g,
+                   COUNT(*) as total_runs,
+                   ROUND(SUM(r.actual_qty_kg), 0) as produced_kg,
+                   ROUND(SUM(r.waste_kg), 0) as waste_kg,
+                   ROUND(AVG(rt.giveaway_pct), 1) as avg_giveaway_pct
+            FROM prod_runs r
+            JOIN prod_products pp ON r.product_code = pp.product_code
+            LEFT JOIN prod_run_totals rt ON r.run_number = rt.run_number
+            WHERE r.status = 'complete'
+              AND r.production_date >= {days_ago(14)}
+            GROUP BY pp.description, pp.customer, pp.pack_size_g
+            ORDER BY avg_giveaway_pct DESC
+        """,
+        "description": "Giveaway analysis by product (last 14 days)",
+    },
+    {
+        "patterns": [
+            r"(open|critical).*(NC|non.conformance)",
+            r"non.conformance.*(open|critical|outstanding)",
+            r"foreign body",
+        ],
+        "sql": lambda: """
+            SELECT nc.nc_id, nc.nc_date, nc.nc_type, nc.severity,
+                   nc.description, nc.raised_by, nc.status,
+                   pp.description as product
+            FROM prod_non_conformance nc
+            LEFT JOIN prod_products pp ON nc.product_code = pp.product_code
+            WHERE nc.status != 'closed'
+            ORDER BY
+                CASE nc.severity WHEN 'critical' THEN 1 WHEN 'major' THEN 2 ELSE 3 END,
+                nc.nc_date
+        """,
+        "description": "Open non-conformances by severity",
+    },
+    {
+        "patterns": [
+            r"(MSC|ASC).*(certified|certification|status)",
+            r"sustainable.*(fish|source)",
+            r"certified.*(batch|supplier)",
+        ],
+        "sql": lambda: """
+            SELECT t.trace_id, t.batch_code, t.supplier,
+                   t.species, t.catch_area, t.certified,
+                   t.country_origin, t.vessel_name
+            FROM prod_traceability t
+            ORDER BY t.received_date DESC
+        """,
+        "description": "MSC/ASC certification status by batch",
+    },
 ]
 
 

@@ -102,6 +102,182 @@ def seed():
             uploaded_at TEXT,
             description TEXT
         );
+
+        -- Production ERP tables (detailed pack-level tracking)
+        DROP TABLE IF EXISTS prod_lines;
+        DROP TABLE IF EXISTS prod_products;
+        DROP TABLE IF EXISTS prod_runs;
+        DROP TABLE IF EXISTS prod_transactions;
+        DROP TABLE IF EXISTS prod_run_totals;
+        DROP TABLE IF EXISTS prod_traceability;
+        DROP TABLE IF EXISTS prod_temperature_logs;
+        DROP TABLE IF EXISTS prod_non_conformance;
+        DROP TABLE IF EXISTS prod_case_verification;
+        DROP TABLE IF EXISTS prod_despatch;
+        DROP TABLE IF EXISTS prod_shifts;
+
+        CREATE TABLE prod_lines (
+            line_id INTEGER PRIMARY KEY,
+            line_name TEXT NOT NULL,
+            line_type TEXT,
+            area TEXT,
+            max_capacity_kg REAL,
+            active INTEGER DEFAULT 1,
+            created_date TEXT
+        );
+
+        CREATE TABLE prod_products (
+            product_code TEXT PRIMARY KEY,
+            description TEXT NOT NULL,
+            category TEXT,
+            species TEXT,
+            customer TEXT,
+            pack_size_g REAL,
+            shelf_life_days INTEGER,
+            allergens TEXT,
+            hazard_class TEXT DEFAULT 'HIGH',
+            active INTEGER DEFAULT 1
+        );
+
+        CREATE TABLE prod_traceability (
+            trace_id TEXT PRIMARY KEY,
+            batch_code TEXT NOT NULL,
+            supplier TEXT,
+            species TEXT,
+            catch_area TEXT,
+            catch_method TEXT,
+            vessel_name TEXT,
+            landing_date TEXT,
+            kill_date TEXT,
+            received_date TEXT,
+            received_temp_c REAL,
+            use_by_date TEXT,
+            country_origin TEXT,
+            certified TEXT,
+            allergen_check INTEGER DEFAULT 0,
+            created_date TEXT
+        );
+
+        CREATE TABLE prod_runs (
+            run_number TEXT PRIMARY KEY,
+            production_date TEXT NOT NULL,
+            shift_code TEXT,
+            shift_date TEXT,
+            prod_line INTEGER REFERENCES prod_lines(line_id),
+            product_code TEXT REFERENCES prod_products(product_code),
+            spec TEXT,
+            prog_id TEXT,
+            target_qty_kg REAL,
+            actual_qty_kg REAL,
+            waste_kg REAL DEFAULT 0,
+            yield_pct REAL,
+            status TEXT DEFAULT 'active',
+            complete INTEGER DEFAULT 0,
+            kill_date TEXT,
+            trace_id TEXT,
+            created_by TEXT,
+            created_date TEXT,
+            updated_by TEXT,
+            updated_date TEXT
+        );
+
+        CREATE TABLE prod_transactions (
+            trans_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            run_number TEXT REFERENCES prod_runs(run_number),
+            trans_date TEXT NOT NULL,
+            product_code TEXT,
+            weight_g REAL NOT NULL,
+            target_weight_g REAL,
+            tare_g REAL DEFAULT 0,
+            net_weight_g REAL,
+            overweight_g REAL,
+            barcode TEXT,
+            label_printed INTEGER DEFAULT 1,
+            scanner_pass INTEGER DEFAULT 1,
+            prod_line INTEGER,
+            operator_id TEXT
+        );
+
+        CREATE TABLE prod_run_totals (
+            run_number TEXT PRIMARY KEY REFERENCES prod_runs(run_number),
+            total_packs INTEGER,
+            total_weight_kg REAL,
+            avg_weight_g REAL,
+            min_weight_g REAL,
+            max_weight_g REAL,
+            std_dev_g REAL,
+            giveaway_kg REAL,
+            giveaway_pct REAL,
+            reject_count INTEGER DEFAULT 0,
+            downtime_mins INTEGER DEFAULT 0,
+            updated_date TEXT
+        );
+
+        CREATE TABLE prod_temperature_logs (
+            log_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            location TEXT NOT NULL,
+            reading_time TEXT NOT NULL,
+            temp_celsius REAL NOT NULL,
+            target_min REAL DEFAULT -1.0,
+            target_max REAL DEFAULT 4.0,
+            in_range INTEGER,
+            alert_raised INTEGER DEFAULT 0,
+            recorded_by TEXT
+        );
+
+        CREATE TABLE prod_non_conformance (
+            nc_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nc_date TEXT NOT NULL,
+            run_number TEXT,
+            product_code TEXT,
+            nc_type TEXT,
+            severity TEXT,
+            description TEXT,
+            root_cause TEXT,
+            corrective_action TEXT,
+            raised_by TEXT,
+            closed_by TEXT,
+            closed_date TEXT,
+            status TEXT DEFAULT 'open'
+        );
+
+        CREATE TABLE prod_case_verification (
+            verify_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            run_number TEXT,
+            case_barcode TEXT,
+            expected_plu TEXT,
+            scanned_plu TEXT,
+            match INTEGER,
+            scan_time TEXT,
+            scanner_id TEXT,
+            prod_line INTEGER
+        );
+
+        CREATE TABLE prod_despatch (
+            despatch_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            order_number TEXT,
+            customer TEXT,
+            product_code TEXT,
+            qty_cases INTEGER,
+            qty_kg REAL,
+            despatch_date TEXT,
+            delivery_date TEXT,
+            vehicle_temp_c REAL,
+            status TEXT DEFAULT 'pending'
+        );
+
+        CREATE TABLE prod_shifts (
+            shift_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            shift_date TEXT NOT NULL,
+            shift_code TEXT NOT NULL,
+            line_id INTEGER,
+            headcount INTEGER,
+            planned_hours REAL,
+            actual_hours REAL,
+            overtime_hours REAL DEFAULT 0,
+            output_kg REAL,
+            kg_per_head REAL
+        );
     ''')
 
     # === PRODUCTS ===
@@ -242,6 +418,202 @@ def seed():
     ]
     c.executemany('INSERT INTO documents VALUES (?,?,?,?,?)', docs)
 
+    # === PRODUCTION ERP SEED DATA ===
+
+    # Production lines
+    prod_lines = [
+        (1, 'Line 1', 'filleting', 'fresh', 5000),
+        (2, 'Line 2', 'filleting', 'fresh', 4500),
+        (3, 'Line 3', 'packing', 'fresh', 6000),
+        (4, 'Smoke Line', 'smoking', 'smoked', 2000),
+        (5, 'VA Line', 'value-added', 'value-added', 3000),
+        (6, 'Packing A', 'packing', 'fresh', 5500),
+    ]
+    for pl in prod_lines:
+        c.execute('INSERT INTO prod_lines (line_id, line_name, line_type, area, max_capacity_kg) VALUES (?,?,?,?,?)', pl)
+
+    # Production products (PLU)
+    prod_products = [
+        ('COD-200-R01', 'Cod Fillet Skinless 200g', 'fillet', 'cod', 'Retail A', 200, 7, 'fish'),
+        ('COD-280-R02', 'Cod Loin 280g', 'loin', 'cod', 'Retail B', 280, 7, 'fish'),
+        ('SAL-130-R01', 'Salmon Fillet Portion 130g', 'fillet', 'salmon', 'Retail A', 130, 7, 'fish'),
+        ('SAL-200-R03', 'Salmon Darnes 200g', 'portion', 'salmon', 'Retail C', 200, 6, 'fish'),
+        ('HAD-170-R02', 'Smoked Haddock Fillet 170g', 'smoked', 'haddock', 'Retail B', 170, 10, 'fish'),
+        ('MAC-150-R01', 'Mackerel Fillet Peppered 150g', 'smoked', 'mackerel', 'Retail A', 150, 14, 'fish, mustard'),
+        ('FCA-300-R02', 'Fish Cakes Cod & Parsley 300g', 'value-add', 'cod', 'Retail B', 300, 5, 'fish, wheat, egg'),
+        ('FCA-400-R03', 'Fish Cakes Premium 400g', 'value-add', 'cod', 'Retail C', 400, 5, 'fish, wheat, egg, milk'),
+        ('PRN-200-R01', 'King Prawns 200g', 'shellfish', 'prawn', 'Retail A', 200, 5, 'crustaceans'),
+        ('SEA-500-R02', 'Seafood Selection 500g', 'mixed', 'mixed', 'Retail B', 500, 4, 'fish, crustaceans, molluscs'),
+    ]
+    for pp in prod_products:
+        c.execute('INSERT INTO prod_products (product_code, description, category, species, customer, pack_size_g, shelf_life_days, allergens) VALUES (?,?,?,?,?,?,?,?)', pp)
+
+    # Traceability batches
+    trace_data = [
+        ('TR-0401', 'BC-COD-8831', 'North Sea Catch Ltd', 'cod', 'North Sea IV', 'trawl', 'Harvest Moon', '2025-03-28', '2025-03-28', '2025-03-30', 1.2, '2025-04-06', 'UK', 'MSC'),
+        ('TR-0402', 'BC-SAL-4421', 'Highland Salmon Co', 'salmon', 'Scotland West', 'farmed', None, '2025-03-29', '2025-03-29', '2025-03-31', 0.8, '2025-04-07', 'UK', 'ASC'),
+        ('TR-0403', 'BC-HAD-7712', 'Nordic Fish Supply', 'haddock', 'Norwegian Sea', 'line caught', 'Polar Star', '2025-03-27', '2025-03-27', '2025-03-30', 1.5, '2025-04-08', 'Norway', 'MSC'),
+        ('TR-0404', 'BC-COD-8832', 'North Sea Catch Ltd', 'cod', 'North Sea IV', 'trawl', 'Sea Ranger', '2025-04-01', '2025-04-01', '2025-04-02', 1.0, '2025-04-09', 'UK', 'MSC'),
+        ('TR-0405', 'BC-MAC-2201', 'Cornish Pelagic Ltd', 'mackerel', 'Celtic Sea VII', 'purse seine', 'Atlantic Spirit', '2025-03-30', '2025-03-30', '2025-04-01', 0.5, '2025-04-14', 'UK', 'MSC'),
+        ('TR-0406', 'BC-PRN-5501', 'Pacific Shellfish Co', 'prawn', 'Indian Ocean', 'farmed', None, '2025-02-15', '2025-02-15', '2025-03-20', -18.0, '2025-08-15', 'Vietnam', 'ASC'),
+    ]
+    for t in trace_data:
+        c.execute('INSERT INTO prod_traceability (trace_id, batch_code, supplier, species, catch_area, catch_method, vessel_name, landing_date, kill_date, received_date, received_temp_c, use_by_date, country_origin, certified) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)', t)
+
+    # Production runs (30 days of data)
+    run_operators = ['AMORGAN', 'MKOWALSKI', 'PDESAI', 'AKAZLAUSKIENE', 'RPOPESCU']
+    run_id = 7200
+    run_records = []
+    for day_offset in range(30):
+        date = today - timedelta(days=day_offset)
+        date_str = date.strftime('%Y-%m-%d')
+        trace = random.choice(trace_data)
+
+        for run_in_day in range(random.randint(3, 6)):
+            run_id += 1
+            run_num = f'{run_id:06d}'
+            pp = random.choice(prod_products)
+            line = random.choice(prod_lines)
+            shift = random.choice(['DAY', 'NIGHT'])
+            target = round(random.uniform(300, 1200), 0)
+            actual = round(target * random.uniform(0.88, 0.99), 1)
+            waste = round(target - actual, 1)
+            yld = round(actual / target * 100, 1)
+            op = random.choice(run_operators)
+
+            c.execute('''INSERT INTO prod_runs
+                (run_number, production_date, shift_code, shift_date, prod_line,
+                 product_code, spec, prog_id, target_qty_kg, actual_qty_kg,
+                 waste_kg, yield_pct, status, complete, kill_date, trace_id,
+                 created_by, created_date)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
+                (run_num, date_str, shift, date_str, line[0],
+                 pp[0], f'SP-{pp[3][:3].upper()}-01', f'P{random.randint(1,10):03d}',
+                 target, actual, waste, yld, 'complete', 1,
+                 trace[7], trace[0], op, date_str))
+            run_records.append((run_num, pp, line, actual, target, date_str, op))
+
+            # Generate pack-level transactions (~15-25 per run)
+            pack_count = random.randint(15, 25)
+            target_wt = pp[5]  # pack_size_g
+            for _ in range(pack_count):
+                wt = round(target_wt + random.uniform(-8, 12), 1)
+                tare = round(random.uniform(3, 8), 1)
+                net = round(wt - tare, 1)
+                over = round(net - target_wt, 1)
+                c.execute('''INSERT INTO prod_transactions
+                    (run_number, trans_date, product_code, weight_g,
+                     target_weight_g, tare_g, net_weight_g, overweight_g,
+                     barcode, prod_line, operator_id)
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?)''',
+                    (run_num, date_str, pp[0], wt, target_wt,
+                     tare, net, over, f'5012345{random.randint(100000,999999)}',
+                     line[0], op))
+
+            # Run totals (aggregated)
+            c.execute('''INSERT INTO prod_run_totals
+                (run_number, total_packs, total_weight_kg, avg_weight_g,
+                 giveaway_kg, giveaway_pct, reject_count, downtime_mins)
+                VALUES (?,?,?,?,?,?,?,?)''',
+                (run_num, pack_count, round(actual, 1),
+                 round(target_wt + random.uniform(-2, 5), 1),
+                 round(waste * 0.3, 1), round(waste / target * 100, 1),
+                 random.randint(0, 3), random.randint(0, 15)))
+
+            # Case verification (~5 per run, 95% match rate)
+            for _ in range(random.randint(3, 7)):
+                scanned = pp[0] if random.random() < 0.95 else random.choice(prod_products)[0]
+                c.execute('''INSERT INTO prod_case_verification
+                    (run_number, case_barcode, expected_plu, scanned_plu,
+                     match, scan_time, scanner_id, prod_line)
+                    VALUES (?,?,?,?,?,?,?,?)''',
+                    (run_num, f'CS{random.randint(100000,999999)}',
+                     pp[0], scanned, 1 if scanned == pp[0] else 0,
+                     date_str, f'SCN-{line[0]}', line[0]))
+
+    # Temperature logs (production-specific locations)
+    prod_locations = {
+        'chiller_1': (-1.0, 4.0, 2.0),
+        'chiller_2': (-1.0, 4.0, 2.5),
+        'blast_freezer': (-25.0, -18.0, -21.0),
+        'goods_in': (-1.0, 5.0, 1.5),
+        'despatch': (-1.0, 5.0, 2.0),
+    }
+    for day_offset in range(30):
+        date = today - timedelta(days=day_offset)
+        for hour in [6, 10, 14, 18]:
+            for loc, (tmin, tmax, base) in prod_locations.items():
+                temp = round(base + random.uniform(-1.0, 1.0), 1)
+                if random.random() < 0.03:
+                    temp = round(tmax + random.uniform(0.5, 3.0), 1)
+                in_range = 1 if tmin <= temp <= tmax else 0
+                reading_time = date.replace(hour=hour).strftime('%Y-%m-%d %H:%M')
+                c.execute('''INSERT INTO prod_temperature_logs
+                    (location, reading_time, temp_celsius, target_min, target_max,
+                     in_range, recorded_by)
+                    VALUES (?,?,?,?,?,?,?)''',
+                    (loc, reading_time, temp, tmin, tmax, in_range,
+                     random.choice(run_operators)))
+
+    # Non-conformance records
+    nc_types = ['weight', 'label', 'foreign_body', 'temp', 'allergen']
+    severities = ['minor', 'minor', 'minor', 'major', 'critical']
+    nc_statuses = ['closed', 'closed', 'closed', 'investigating', 'open']
+    for day_offset in range(30):
+        if random.random() < 0.3:
+            date = today - timedelta(days=day_offset)
+            date_str = date.strftime('%Y-%m-%d')
+            run = random.choice(run_records) if run_records else None
+            nc_type = random.choice(nc_types)
+            sev = random.choice(severities)
+            stat = random.choice(nc_statuses)
+            closed_date = (date + timedelta(days=random.randint(0, 3))).strftime('%Y-%m-%d') if stat == 'closed' else None
+            c.execute('''INSERT INTO prod_non_conformance
+                (nc_date, run_number, product_code, nc_type, severity,
+                 description, raised_by, closed_by, closed_date, status)
+                VALUES (?,?,?,?,?,?,?,?,?,?)''',
+                (date_str, run[0] if run else None, run[1][0] if run else None,
+                 nc_type, sev, f'{nc_type} issue on {date_str}',
+                 random.choice(run_operators),
+                 random.choice(run_operators) if stat == 'closed' else None,
+                 closed_date, stat))
+
+    # Despatch records
+    desp_customers = ['Retail A', 'Retail B', 'Retail C', 'Wholesale D']
+    for day_offset in range(30):
+        if random.random() < 0.6:
+            date = today - timedelta(days=day_offset)
+            pp = random.choice(prod_products)
+            c.execute('''INSERT INTO prod_despatch
+                (order_number, customer, product_code, qty_cases, qty_kg,
+                 despatch_date, delivery_date, vehicle_temp_c, status)
+                VALUES (?,?,?,?,?,?,?,?,?)''',
+                (f'ORD-{random.randint(10000,99999)}', random.choice(desp_customers),
+                 pp[0], random.randint(20, 200), round(random.uniform(100, 800), 1),
+                 date.strftime('%Y-%m-%d'),
+                 (date + timedelta(days=1)).strftime('%Y-%m-%d'),
+                 round(random.uniform(0.5, 3.5), 1),
+                 random.choice(['delivered', 'delivered', 'loaded', 'pending'])))
+
+    # Shift records
+    for day_offset in range(30):
+        date = today - timedelta(days=day_offset)
+        for shift in ['DAY', 'NIGHT']:
+            for line in prod_lines[:4]:
+                hc = random.randint(6, 12)
+                planned = hc * 8.0
+                actual = round(planned + random.uniform(-2, 4), 1)
+                ot = max(0, round(actual - planned, 1))
+                output = round(random.uniform(300, 1000), 1)
+                c.execute('''INSERT INTO prod_shifts
+                    (shift_date, shift_code, line_id, headcount,
+                     planned_hours, actual_hours, overtime_hours,
+                     output_kg, kg_per_head)
+                    VALUES (?,?,?,?,?,?,?,?,?)''',
+                    (date.strftime('%Y-%m-%d'), shift, line[0], hc,
+                     planned, actual, ot, output,
+                     round(output / hc, 1)))
+
     conn.commit()
     conn.close()
 
@@ -254,6 +626,13 @@ def seed():
     print(f'  Orders: {order_id}')
     print(f'  Temperature logs: {60 * 12 * 5}')
     print(f'  Documents: {len(docs)}')
+    print(f'  --- Production ERP tables ---')
+    print(f'  Prod lines: {len(prod_lines)}')
+    print(f'  Prod products (PLU): {len(prod_products)}')
+    print(f'  Prod runs: {len(run_records)}')
+    print(f'  Prod traceability: {len(trace_data)}')
+    print(f'  Prod temperature logs: {30 * 4 * 5}')
+    print(f'  Total tables: 19')
 
 
 if __name__ == '__main__':

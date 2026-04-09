@@ -2,7 +2,7 @@
 import pandas as pd
 from modules.database import query
 from modules.sql_dialect import days_ago, days_ahead, days_until
-from config import YIELD_DROP_THRESHOLD, MAX_WEEKLY_HOURS
+from config import YIELD_DROP_THRESHOLD, MAX_WEEKLY_HOURS, PROD_YIELD_MIN, NC_CRITICAL_OPEN_DAYS
 
 
 def check_all_alerts():
@@ -13,6 +13,9 @@ def check_all_alerts():
     alerts.extend(check_overtime())
     alerts.extend(check_expiring_stock())
     alerts.extend(check_order_shortfalls())
+    alerts.extend(check_prod_yield_drops())
+    alerts.extend(check_prod_temp_breaches())
+    alerts.extend(check_open_critical_ncs())
     return sorted(alerts, key=lambda a: {'critical': 0, 'warning': 1, 'info': 2}[a['level']])
 
 
@@ -155,4 +158,75 @@ def check_order_shortfalls():
                 'message': f"Need {row['ordered_kg']:.0f}kg {row['name']} but only {row['available_kg']:.0f}kg available. Short by {shortfall:.0f}kg.",
                 'category': 'orders'
             })
+    return alerts
+
+
+def check_prod_yield_drops():
+    """Alert on production runs with yield below threshold."""
+    df = query(f"""
+        SELECT r.run_number, r.production_date, r.yield_pct,
+               pp.description as product, pp.customer, r.waste_kg
+        FROM prod_runs r
+        JOIN prod_products pp ON r.product_code = pp.product_code
+        WHERE r.status = 'complete'
+          AND r.yield_pct < {PROD_YIELD_MIN}
+          AND r.production_date >= {days_ago(7)}
+        ORDER BY r.yield_pct ASC
+    """)
+
+    alerts = []
+    for _, row in df.iterrows():
+        alerts.append({
+            'level': 'warning',
+            'icon': 'chart-line-down',
+            'title': f"Low yield: {row['product']} (Run {row['run_number']})",
+            'message': f"Yield {row['yield_pct']}% (threshold {PROD_YIELD_MIN}%). Waste: {row['waste_kg']}kg. Customer: {row['customer']}.",
+            'category': 'production'
+        })
+    return alerts
+
+
+def check_prod_temp_breaches():
+    """Alert on production temperature breaches in last 24 hours."""
+    df = query(f"""
+        SELECT location, reading_time, temp_celsius,
+               target_max, recorded_by
+        FROM prod_temperature_logs
+        WHERE in_range = 0
+          AND reading_time >= {days_ago(1)}
+        ORDER BY reading_time DESC
+    """)
+
+    alerts = []
+    for _, row in df.iterrows():
+        alerts.append({
+            'level': 'critical',
+            'icon': 'temperature-high',
+            'title': f"Production temp breach: {row['location']}",
+            'message': f"{row['temp_celsius']}C (max {row['target_max']}C) at {row['reading_time']}. Recorded by {row['recorded_by']}.",
+            'category': 'temperature'
+        })
+    return alerts
+
+
+def check_open_critical_ncs():
+    """Alert on critical non-conformances open beyond threshold."""
+    df = query(f"""
+        SELECT nc_id, nc_date, nc_type, severity,
+               description, raised_by, status
+        FROM prod_non_conformance
+        WHERE severity = 'critical'
+          AND status != 'closed'
+    """)
+
+    alerts = []
+    for _, row in df.iterrows():
+        level = 'critical' if row['status'] == 'open' else 'warning'
+        alerts.append({
+            'level': level,
+            'icon': 'triangle-exclamation',
+            'title': f"Critical NC open: {row['nc_type']} (#{row['nc_id']})",
+            'message': f"{row['description']}. Raised by {row['raised_by']}. Status: {row['status']}.",
+            'category': 'compliance'
+        })
     return alerts
