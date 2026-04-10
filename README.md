@@ -67,7 +67,7 @@ User asks: "What was yesterday's waste?"
       ▼
 ┌─────────────┐     ┌──────────────────┐     ┌──────────────┐
 │ Schema       │────▶│ Pick 4 tables    │────▶│ Ollama LLM   │
-│ Registry     │     │ from 147         │     │ (Phi3/Mistral)│
+│ Registry     │     │ from 19          │     │ (Phi3/Mistral)│
 │ (7 domains)  │     │ (domain match)   │     │              │
 └─────────────┘     └──────────────────┘     └──────────────┘
                                                     │
@@ -86,7 +86,7 @@ User asks: "What was yesterday's waste?"
                                         plain English
 ```
 
-**Step 1 — Domain detection.** User asks about "orders" → schema registry maps it to 2 tables out of 147. Only those go to the LLM.
+**Step 1 — Domain detection.** User asks about "orders" → schema registry maps it to 2 tables out of 19. Only those go to the LLM.
 
 **Step 2 — SQL generation.** Ollama converts the question to SQL. Pre-built library short-circuits the 10 most common questions.
 
@@ -131,7 +131,7 @@ User asks: "What was yesterday's waste?"
 │  → Salmon fillets: 42kg waste (8.1% of output)             │
 │                                                             │
 │  TAB 7: Schema Registry                                     │
-│  7 domains │ 147 tables │ 4 selected for current query     │
+│  7 domains │ up to 147 tables │ 4 selected for current query     │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -215,6 +215,8 @@ production:
 # Also: orders, temperature, staff, stock, compliance
 ```
 
+> **Production ERP integration:** Includes 11 production ERP tables (runs, traceability, temperature, non-conformance, shifts, despatch) with 8 pre-built SQL queries and 3 production-specific alerts.
+
 ---
 
 ## Stack
@@ -226,7 +228,7 @@ production:
 | Vector Search | ChromaDB + sentence-transformers | PDF search (RAG) |
 | UI | Streamlit (7 tabs) | Dashboard, chat, charts |
 | Charts | Plotly | Production and waste visualisation |
-| Config | YAML | Schema registry — 7 domains, 147 tables |
+| Config | YAML | Schema registry — 7 domains, up to 147 tables |
 | Tests | pytest | 36 unit + integration tests |
 
 ---
