@@ -15,6 +15,8 @@
 
 Manufacturing teams query data through Excel exports and IT requests. OpsMind lets any operator ask the database in English — offline, on-prem, no API keys.
 
+Includes production ERP integration with 19 tables covering batch-centric runs, waterfall yield tracking (RSPCA/GG/Almaria tiers), batch lineage for OCM scan-back traceability, and shelf life management.
+
 ---
 
 ## See it run
@@ -215,7 +217,32 @@ production:
 # Also: orders, temperature, staff, stock, compliance
 ```
 
-> **Production ERP integration:** Includes 11 production ERP tables (runs, traceability, temperature, non-conformance, shifts, despatch) with 8 pre-built SQL queries and 3 production-specific alerts.
+> **Production ERP integration:** Includes 19 production ERP tables (runs, traceability, temperature, non-conformance, shifts, despatch, shelf life, yield tiers) with 8 pre-built SQL queries and 3 production-specific alerts.
+
+> Production data follows a batch-centric run structure: one batch feeds one run producing multiple products across RSPCA (Tier 1), GG (Tier 2), and catch-all (Tier 3) tiers. The schema registry maps these tables to 7 business domains for efficient NL-to-SQL query generation.
+
+## Production Queries
+
+8 pre-built production queries for instant results (no LLM round-trip):
+
+| # | Query | Description |
+|---|---|---|
+| 1 | Daily yield by production line | Yield % per line for a given date, compared to 30-day average |
+| 2 | Batch traceability lookup (batch to vessel) | Full lineage from finished batch back to raw material vessel/intake |
+| 3 | Temperature breach report | All cold-store and in-process readings outside threshold in a date range |
+| 4 | Allergen changeover check | Validates cleaning records between allergen-class changeovers on a line |
+| 5 | Shift productivity (day vs night) | Output kg, waste kg, and yield % split by shift for comparison |
+| 6 | Giveaway analysis by product | Overweight giveaway per product vs target, ranked by cost impact |
+| 7 | Open critical non-conformances | All open NCs with severity = Critical, grouped by category and age |
+| 8 | MSC/ASC certification status | Current certification status per species/supplier with expiry dates |
+
+## Production Alerts
+
+3 production-specific alerts monitored continuously:
+
+- **Yield drops** — flags when line yield falls below the 30-day rolling average by a configurable threshold
+- **Temperature breaches** — triggers when any cold-store or in-process sensor exceeds its defined limit
+- **Open critical NCs** — alerts when critical non-conformances remain unresolved past the SLA window
 
 ---
 
