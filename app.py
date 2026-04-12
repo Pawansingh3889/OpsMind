@@ -25,6 +25,9 @@ from modules.compliance import (
 )
 from modules.alerts import check_all_alerts
 from modules.llm import get_response, get_streaming_response, FACTORY_SYSTEM_PROMPT
+from modules.monitoring import init_sentry
+
+init_sentry()
 
 # === PAGE CONFIG ===
 st.set_page_config(

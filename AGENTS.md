@@ -129,6 +129,10 @@ The `sql_agent.py` module enforces two layers of protection:
 
 Any change to SQL generation or execution must preserve these safety checks. Never allow write operations against the database.
 
+## Error Monitoring
+
+Optional Sentry integration via `modules/monitoring.py`. Set `SENTRY_DSN` to enable; all functions are no-ops when unset. Three public functions: `init_sentry()` (called once at startup in `app.py`), `capture_exception(e)` (used in `sql_agent.py` error paths), and `capture_message(msg, level)`. The `sentry-sdk` import is deferred so the app runs fine without the package installed.
+
 ## Conventions
 
 - **Read-only SQL only.** `SELECT` and `WITH` (CTEs) are the only allowed statement types.

@@ -289,6 +289,33 @@ OpsMind will automatically create the `documents` table and the pgvector extensi
 
 ---
 
+## Architecture
+
+```
+User Question (plain English)
+    |
+    v
+[LangGraph Agent] --- 6-node state graph
+    |
+    +---> [Query Library] --- 8 pre-built queries (fast path)
+    |
+    +---> [Schema Registry] --- 7 domains, 19 tables
+    |
+    +---> [Ollama / Gemma 3 12B] --- NL-to-SQL generation
+    |
+    v
+[SQL Validation] --- read-only enforcement
+    |
+    v
+[SQLAlchemy] --- execute query
+    |
+    v
+[Results + Explanation]
+
+RAG: ChromaDB or PostgreSQL pgvector
+Monitoring: Sentry (opt-in)
+```
+
 ## Agent Architecture
 
 OpsMind uses a LangGraph state graph to structure the NL-to-SQL pipeline as a multi-step agent with 6 nodes:
@@ -317,6 +344,19 @@ question -> [detect_domain] -> [check_library] --match--> [validate_sql] -> [exe
 **Structured state flow** -- the full state `{question, domain, sql, results, explanation, error}` flows through each node, making the pipeline observable and debuggable.
 
 See `modules/agent_graph.py` for the implementation.
+
+---
+
+## Error Monitoring
+
+OpsMind supports optional error monitoring via [Sentry](https://sentry.io). Set the `SENTRY_DSN` environment variable to enable it. If not set, monitoring is completely disabled (no-op).
+
+```bash
+export SENTRY_DSN="https://examplePublicKey@o0.ingest.sentry.io/0"
+export ENVIRONMENT="production"   # optional, defaults to "development"
+```
+
+Errors in the SQL agent pipeline are automatically reported when Sentry is enabled.
 
 ---
 
