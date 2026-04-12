@@ -289,6 +289,37 @@ OpsMind will automatically create the `documents` table and the pgvector extensi
 
 ---
 
+## Agent Architecture
+
+OpsMind uses a LangGraph state graph to structure the NL-to-SQL pipeline as a multi-step agent with 6 nodes:
+
+```
+question -> [detect_domain] -> [check_library] --match--> [validate_sql] -> [execute_sql] -> [explain_results]
+                                     |                          |
+                                  no match                  invalid SQL
+                                     |                          |
+                               [generate_sql] -------->     END (error)
+```
+
+| Node | Purpose |
+|---|---|
+| `detect_domain` | Maps the question to one of 7 business domains via keyword scoring |
+| `check_library` | Checks 18 pre-built regex patterns for a fast-path match (no LLM needed) |
+| `generate_sql` | LLM generates SQL from the question and domain-scoped schema |
+| `validate_sql` | Safety gate -- only SELECT/WITH allowed, blocks dangerous keywords |
+| `execute_sql` | Runs the validated query via SQLAlchemy (read-only) |
+| `explain_results` | LLM explains results in plain English with business context |
+
+**Pre-built library fast path** -- the 18 most common production questions bypass LLM generation entirely, returning tested SQL in milliseconds.
+
+**SQL safety validation** -- every query passes through a two-layer check (allowlist + blocklist) before execution. INSERT, UPDATE, DELETE, DROP, and other write operations are always blocked.
+
+**Structured state flow** -- the full state `{question, domain, sql, results, explanation, error}` flows through each node, making the pipeline observable and debuggable.
+
+See `modules/agent_graph.py` for the implementation.
+
+---
+
 ## Limitations
 
 | Area | Reality |

@@ -27,6 +27,25 @@ SQL Agent -- safety check, then SQLAlchemy execution (read-only)
 Result table + Plotly chart + LLM explanation
 ```
 
+### LangGraph Agent (`modules/agent_graph.py`)
+
+The NL-to-SQL pipeline is implemented as a LangGraph state graph with 6 nodes and conditional edges:
+
+1. **detect_domain** -- calls `schema_registry.detect_domain()` to identify the business domain.
+2. **check_library** -- calls `query_library.find_matching_query()` for a pre-built SQL match.
+3. **generate_sql** -- if no library match, generates SQL via the LLM with domain-scoped schema.
+4. **validate_sql** -- safety gate: only `SELECT`/`WITH` allowed; blocks `INSERT`, `UPDATE`, `DELETE`, `DROP`, `ALTER`, `TRUNCATE`, `EXEC`, `EXECUTE`, `xp_`, `sp_`.
+5. **execute_sql** -- runs the validated query via `database.query()`.
+6. **explain_results** -- LLM explains results in plain English for managers.
+
+**Edge logic:**
+- If `check_library` finds a match, the graph skips `generate_sql` and jumps to `validate_sql`.
+- If `validate_sql` detects unsafe SQL, the graph short-circuits to END with an error.
+
+**State schema:** `{question, domain, sql, results, explanation, error}`
+
+**Entry point:** `ask(question)` builds and invokes the compiled graph, returning the final state dict.
+
 ### Seven Business Domains
 
 The schema registry maps questions to one of seven domains via keyword matching: `traceability`, `production`, `orders`, `temperature`, `staff`, `stock`, `compliance`. Each domain exposes only its relevant tables to the LLM prompt, keeping context small.
@@ -46,6 +65,7 @@ Both backends store factory PDFs (SOPs, HACCP plans, audit reports) as 384-dimen
 |---|---|
 | `app.py` | Streamlit entry point, 7-tab UI (SQL Chat, Document Search, Dashboard, Compliance, Alerts, Excel Upload, Schema Registry) |
 | `config.py` | All configuration: Ollama model, database URL, ChromaDB path, alert thresholds |
+| `modules/agent_graph.py` | LangGraph multi-step agent: 6-node state graph (detect_domain, check_library, generate_sql, validate_sql, execute_sql, explain_results) with conditional edges |
 | `modules/sql_agent.py` | NL-to-SQL pipeline: query library check, LLM fallback, safety validation, execution, explanation |
 | `modules/schema_registry.py` | Domain detection (keyword scoring), table filtering, LLM prompt construction. Contains `DEFAULT_SCHEMA` and `DOMAIN_KEYWORDS` |
 | `modules/query_library.py` | 18 pre-built SQL patterns with regex matching. Returns tested SQL for common questions without invoking the LLM |
