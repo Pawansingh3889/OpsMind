@@ -7,3 +7,9 @@ data/chroma_store/
 dist/
 build/
 .streamlit/secrets.toml
+
+# AI tools
+.claude/
+.cursorrules
+.continue/
+.aider*
