@@ -245,13 +245,43 @@ production:
 
 ---
 
+## Vector Search Backend
+
+OpsMind supports two vector backends for RAG document search:
+
+### ChromaDB (default)
+
+Local, embedded vector store. No external services needed -- works out of the box.
+
+```bash
+# No extra config required. ChromaDB is the default.
+OPSMIND_VECTOR_DB=chromadb   # optional, this is the default
+```
+
+### PostgreSQL + pgvector (production)
+
+Shared, production-grade vector store backed by PostgreSQL with the pgvector extension. Recommended when multiple OpsMind instances need to share the same document index, or when you want vector search co-located with your existing PostgreSQL database.
+
+```bash
+# 1. Install pgvector in your PostgreSQL instance
+#    https://github.com/pgvector/pgvector
+
+# 2. Point OpsMind at the database
+OPSMIND_VECTOR_DB=pgvector
+OPSMIND_VECTOR_PG_URL=postgresql+psycopg2://user:pass@host:5432/opsmind
+```
+
+OpsMind will automatically create the `documents` table and the pgvector extension on first use. If PostgreSQL is unreachable, the system falls back to ChromaDB so the app keeps working.
+
+---
+
 ## Stack
 
 | Layer | Tool | What it does |
 |---|---|---|
 | LLM | Ollama (Gemma 3 12B) | English → SQL, result explanation |
 | Database | SQLAlchemy | SQLite (demo) + SQL Server (production) |
-| Vector Search | ChromaDB + sentence-transformers | PDF search (RAG) |
+| Vector Search | ChromaDB or PostgreSQL+pgvector + sentence-transformers | PDF search (RAG) |
 | UI | Streamlit (7 tabs) | Dashboard, chat, charts |
 | Charts | Plotly | Production and waste visualisation |
 | Config | YAML | Schema registry — 7 domains, up to 147 tables |

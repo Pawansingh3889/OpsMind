@@ -33,7 +33,12 @@ The schema registry maps questions to one of seven domains via keyword matching:
 
 ### RAG Document Search
 
-ChromaDB stores factory PDFs (SOPs, HACCP plans, audit reports) as vector embeddings. The `doc_search` module provides semantic search over these documents. Ingestion splits PDFs into ~500-char overlapping chunks.
+The vector search backend is pluggable. Set `OPSMIND_VECTOR_DB` to `chromadb` (default) or `pgvector`.
+
+- **ChromaDB** (default) -- local embedded store via `modules/doc_search.py`. No external services.
+- **PostgreSQL + pgvector** -- production backend via `modules/doc_search_pg.py`. Requires `OPSMIND_VECTOR_PG_URL`. Falls back to ChromaDB if PostgreSQL is unreachable.
+
+Both backends store factory PDFs (SOPs, HACCP plans, audit reports) as 384-dimensional embeddings from `all-MiniLM-L6-v2`. Ingestion splits PDFs into ~500-char overlapping chunks. The public API is identical: `search()`, `ingest_pdf()`, `ingest_text()`, `add_document()`, `get_doc_count()`.
 
 ## Key Files
 
@@ -45,6 +50,7 @@ ChromaDB stores factory PDFs (SOPs, HACCP plans, audit reports) as vector embedd
 | `modules/schema_registry.py` | Domain detection (keyword scoring), table filtering, LLM prompt construction. Contains `DEFAULT_SCHEMA` and `DOMAIN_KEYWORDS` |
 | `modules/query_library.py` | 18 pre-built SQL patterns with regex matching. Returns tested SQL for common questions without invoking the LLM |
 | `modules/doc_search.py` | ChromaDB vector search for factory PDFs. Functions: `search()`, `ingest_pdf()`, `add_document()` |
+| `modules/doc_search_pg.py` | Pluggable vector search (pgvector or ChromaDB). Same public API as `doc_search.py` with PostgreSQL+pgvector backend and automatic fallback |
 | `modules/sql_dialect.py` | SQL dialect abstraction layer. Generates correct date functions for SQLite (demo) vs SQL Server (production) |
 | `modules/database.py` | SQLAlchemy engine creation and management |
 | `modules/llm.py` | Ollama API integration (prompt/response, streaming) |
@@ -112,7 +118,7 @@ Any change to SQL generation or execution must preserve these safety checks. Nev
 - **SQL dialect abstraction.** Use functions from `modules/sql_dialect.py` (`days_ago()`, `days_ahead()`, `days_until()`, etc.) instead of raw date SQL. This keeps queries portable between SQLite and SQL Server.
 - **Currency in GBP, weights in kg.** All monetary values are British pounds; all weights are kilograms.
 - **Streamlit caching.** SQL query results are cached for 5 minutes via `@st.cache_data(ttl=300)`.
-- **Environment variables for config.** Database connection: `OPSMIND_DB`. Ollama model: `OLLAMA_MODEL`. Schema file: `SCHEMA_CONFIG`. ChromaDB directory: `OPSMIND_CHROMA_DIR`.
+- **Environment variables for config.** Database connection: `OPSMIND_DB`. Ollama model: `OLLAMA_MODEL`. Schema file: `SCHEMA_CONFIG`. ChromaDB directory: `OPSMIND_CHROMA_DIR`. Vector backend: `OPSMIND_VECTOR_DB` (`chromadb` or `pgvector`). pgvector connection: `OPSMIND_VECTOR_PG_URL`.
 
 ## Adding a New Pre-Built Query
 

@@ -25,6 +25,10 @@ DB_TYPE = "mssql" if "mssql" in DATABASE_URL else "sqlite"
 # ChromaDB
 CHROMA_DIR = os.getenv("OPSMIND_CHROMA_DIR", "data/chroma_store")
 
+# Vector search backend: "chromadb" (default) or "pgvector"
+VECTOR_DB = os.getenv("OPSMIND_VECTOR_DB", "chromadb")
+VECTOR_PG_URL = os.getenv("OPSMIND_VECTOR_PG_URL", "")
+
 # App
 APP_NAME = "OpsMind"
 APP_TAGLINE = "The AI Brain for Your Operations"
