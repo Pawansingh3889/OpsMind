@@ -1,13 +1,12 @@
 """Natural language to SQL query agent. Uses schema registry + pre-built query library."""
-import hashlib
 import pandas as pd
 import streamlit as st
-from sqlalchemy import text
-from modules.llm import get_response
+
 from modules.database import get_engine
-from modules.schema_registry import get_prompt_for_question
-from modules.query_library import find_matching_query
+from modules.llm import get_response
 from modules.monitoring import capture_exception
+from modules.query_library import find_matching_query
+from modules.schema_registry import get_prompt_for_question
 
 
 @st.cache_data(ttl=300, show_spinner=False)

@@ -3,10 +3,9 @@
 Reads OPSMIND_VECTOR_DB from config to choose the backend.
 Falls back to ChromaDB if PostgreSQL is unavailable.
 """
-import os
-import logging
 import json
-from datetime import datetime, timezone
+import logging
+import os
 
 from config import VECTOR_DB, VECTOR_PG_URL
 

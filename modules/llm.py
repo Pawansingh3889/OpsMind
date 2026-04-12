@@ -1,6 +1,8 @@
 """Ollama LLM connection for OpsMind."""
 import json
+
 import ollama
+
 from config import OLLAMA_MODEL
 
 

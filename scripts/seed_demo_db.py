@@ -1,8 +1,8 @@
 """Create a realistic demo database for a fish processing factory."""
-import sqlite3
-import random
-from datetime import datetime, timedelta
 import os
+import random
+import sqlite3
+from datetime import datetime, timedelta
 
 DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'demo.db')
 
@@ -626,13 +626,13 @@ def seed():
     print(f'  Orders: {order_id}')
     print(f'  Temperature logs: {60 * 12 * 5}')
     print(f'  Documents: {len(docs)}')
-    print(f'  --- Production ERP tables ---')
+    print('  --- Production ERP tables ---')
     print(f'  Prod lines: {len(prod_lines)}')
     print(f'  Prod products (PLU): {len(prod_products)}')
     print(f'  Prod runs: {len(run_records)}')
     print(f'  Prod traceability: {len(trace_data)}')
     print(f'  Prod temperature logs: {30 * 4 * 5}')
-    print(f'  Total tables: 19')
+    print('  Total tables: 19')
 
 
 if __name__ == '__main__':

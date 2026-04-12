@@ -3,8 +3,8 @@
 Set SENTRY_DSN environment variable to enable.
 If not set, monitoring is disabled (no-op).
 """
-import os
 import logging
+import os
 
 log = logging.getLogger("monitoring")
 

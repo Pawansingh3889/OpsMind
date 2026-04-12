@@ -16,9 +16,9 @@ Environment:
 """
 
 import json
+import logging
 import os
 import sqlite3
-import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -156,7 +156,7 @@ def run_consumer() -> None:
                 logger.error(f"Consumer error: {msg.error()}")
                 continue
 
-            result = process_message(msg.value())
+            process_message(msg.value())
             msg_count += 1
             if msg_count % 100 == 0:
                 logger.info(f"Processed {msg_count} messages")

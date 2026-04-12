@@ -1,7 +1,8 @@
 """Document search using ChromaDB for semantic search over factory PDFs."""
 import os
+
 import chromadb
-from chromadb.config import Settings
+
 from config import CHROMA_DIR
 
 # Initialize ChromaDB

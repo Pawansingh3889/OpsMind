@@ -7,8 +7,8 @@ so the LLM only sees 4-10 relevant tables instead of all 147.
 Configure by editing schema.yaml or setting SCHEMA_CONFIG env var.
 """
 import os
+
 import yaml
-from config import DB_TYPE
 
 _schema = None
 

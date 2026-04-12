@@ -1,7 +1,7 @@
 """Waste prediction and yield optimization."""
-import pandas as pd
 from modules.database import query as db_query
 from modules.llm import get_response
+
 
 def get_yield_trends(days=30, product_name=None):
     """Get yield trends over time."""
@@ -61,7 +61,7 @@ def predict_waste(product_name, input_kg):
     WHERE pr.name LIKE '%{product_name}%'
     AND p.date >= {days_ago(30)}
     ''')
-    
+
 
     if df.empty or df.iloc[0]['avg_yield'] is None:
         return None

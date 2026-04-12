@@ -17,13 +17,12 @@ from __future__ import annotations
 
 from typing import TypedDict
 
-from langgraph.graph import StateGraph, END
+from langgraph.graph import END, StateGraph
 
-from modules.schema_registry import detect_domain, get_prompt_for_question
-from modules.query_library import find_matching_query
-from modules.llm import get_response
 from modules import database
-
+from modules.llm import get_response
+from modules.query_library import find_matching_query
+from modules.schema_registry import detect_domain, get_prompt_for_question
 
 # ---------------------------------------------------------------------------
 # State

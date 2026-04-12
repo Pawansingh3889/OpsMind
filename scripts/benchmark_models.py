@@ -11,15 +11,16 @@ Prerequisites:
 
 Compares accuracy, response time, and SQL quality across models.
 """
-import time
-import sys
 import os
+import sys
+import time
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 import ollama
 import pandas as pd
 from sqlalchemy import create_engine
+
 from config import DATABASE_URL
 
 # Test questions with known correct SQL patterns
@@ -185,7 +186,7 @@ def benchmark_model(model_name):
 def print_summary(all_results):
     """Print comparison summary across models."""
     print(f"\n{'='*60}")
-    print(f"  COMPARISON SUMMARY")
+    print("  COMPARISON SUMMARY")
     print(f"{'='*60}\n")
 
     print(f"{'Model':<20} {'Avg Time':>10} {'Accuracy':>10} {'Executes':>10} {'Score':>10}")
@@ -205,7 +206,7 @@ def print_summary(all_results):
         print(f"{model:<20} {avg_time:>8.1f}s {accuracy:>9.0f}% {exec_rate:>9.0f}% "
               f"{total_score:>5}/{max_score}")
 
-    print(f"\nScoring: pattern match (1pt) + correct tables (1pt) + executes (2pt) = 4pt max per question")
+    print("\nScoring: pattern match (1pt) + correct tables (1pt) + executes (2pt) = 4pt max per question")
 
 
 if __name__ == "__main__":

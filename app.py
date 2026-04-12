@@ -1,31 +1,38 @@
 """OpsMind — The AI Brain for Your Factory."""
-import streamlit as st
-import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
+import hmac
 import os
 import sys
 import tempfile
-import hmac
+
+import plotly.express as px
+import plotly.graph_objects as go
+import streamlit as st
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(__file__))
 
 from config import APP_NAME, APP_TAGLINE, VERSION
-from modules.sql_agent import run_query
-from modules.doc_search import search as doc_search, ingest_pdf, ingest_text, get_doc_count
-from modules.excel_agent import analyse_file
-from modules.waste_predictor import (
-    get_yield_trends, get_waste_summary, get_yield_by_product,
-    predict_waste, get_ai_waste_analysis
-)
-from modules.compliance import (
-    trace_batch, get_temperature_excursions, get_allergen_matrix,
-    get_compliance_score, generate_audit_summary
-)
 from modules.alerts import check_all_alerts
-from modules.llm import get_response, get_streaming_response, FACTORY_SYSTEM_PROMPT
+from modules.compliance import (
+    generate_audit_summary,
+    get_allergen_matrix,
+    get_compliance_score,
+    get_temperature_excursions,
+    trace_batch,
+)
+from modules.doc_search import get_doc_count, ingest_pdf
+from modules.doc_search import search as doc_search
+from modules.excel_agent import analyse_file
+from modules.llm import FACTORY_SYSTEM_PROMPT, get_response
 from modules.monitoring import init_sentry
+from modules.sql_agent import run_query
+from modules.waste_predictor import (
+    get_ai_waste_analysis,
+    get_waste_summary,
+    get_yield_by_product,
+    get_yield_trends,
+    predict_waste,
+)
 
 init_sentry()
 
@@ -89,7 +96,8 @@ with st.sidebar:
 
     # Quick stats
     try:
-        from modules.database import query as db_q, scalar
+        from modules.database import query as db_q
+        from modules.database import scalar
         from modules.sql_dialect import days_ago
         q_count = scalar(f"SELECT COUNT(*) FROM production WHERE date >= {days_ago(7)}")
         w_total = scalar(f"SELECT COALESCE(SUM(waste_kg), 0) FROM production WHERE date >= {days_ago(7)}")
@@ -226,7 +234,8 @@ elif '📊 Dashboard' in tab:
     st.title("📊 Factory Dashboard")
 
     try:
-        from modules.database import query as db_q, scalar
+        from modules.database import query as db_q
+        from modules.database import scalar
         from modules.sql_dialect import days_ago
 
         # KPI cards

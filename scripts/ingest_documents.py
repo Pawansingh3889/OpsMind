@@ -1,6 +1,7 @@
 """Ingest sample factory documents into ChromaDB for the demo."""
-import sys
 import os
+import sys
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from modules.doc_search import ingest_text

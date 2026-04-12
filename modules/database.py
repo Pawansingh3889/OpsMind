@@ -2,6 +2,7 @@
 import pandas as pd
 import streamlit as st
 from sqlalchemy import create_engine, text
+
 from config import DATABASE_URL, DB_TYPE
 
 

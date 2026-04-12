@@ -7,8 +7,8 @@ the most common operational questions.
 LLM generation is used only for questions that don't match any pattern.
 """
 import re
-from modules.sql_dialect import days_ago, days_ahead, days_until
 
+from modules.sql_dialect import days_ago, days_ahead, days_until
 
 # Each entry: (pattern_regex, sql_template, description)
 # SQL templates use {days_ago_N} placeholders replaced at runtime
@@ -62,7 +62,7 @@ QUERY_LIBRARY = [
             r"order.*(pending|outstanding|open)",
             r"what.*orders.*(this week|pending|due)",
         ],
-        "sql": lambda: f"""
+        "sql": lambda: """
             SELECT o.customer,
                    pr.name as product,
                    ROUND(SUM(o.quantity_kg), 0) as total_kg,

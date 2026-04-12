@@ -1,8 +1,7 @@
 """Smart alerts and anomaly detection for operations."""
-import pandas as pd
+from config import MAX_WEEKLY_HOURS, PROD_YIELD_MIN, YIELD_DROP_THRESHOLD
 from modules.database import query
 from modules.sql_dialect import days_ago, days_ahead, days_until
-from config import YIELD_DROP_THRESHOLD, MAX_WEEKLY_HOURS, PROD_YIELD_MIN, NC_CRITICAL_OPEN_DAYS
 
 
 def check_all_alerts():
@@ -211,7 +210,7 @@ def check_prod_temp_breaches():
 
 def check_open_critical_ncs():
     """Alert on critical non-conformances open beyond threshold."""
-    df = query(f"""
+    df = query("""
         SELECT nc_id, nc_date, nc_type, severity,
                description, raised_by, status
         FROM prod_non_conformance

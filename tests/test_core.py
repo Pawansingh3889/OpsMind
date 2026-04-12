@@ -1,9 +1,9 @@
 """Tests for OpsMind core modules."""
-import pytest
 import os
 import sys
-import sqlite3
+
 import pandas as pd
+import pytest
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
@@ -24,7 +24,7 @@ def ensure_demo_db():
 
 class TestConfig:
     def test_config_loads(self):
-        from config import APP_NAME, VERSION, DATABASE_URL, DB_TYPE
+        from config import APP_NAME, DATABASE_URL, DB_TYPE, VERSION
         assert APP_NAME == "OpsMind"
         assert VERSION is not None
         assert DATABASE_URL is not None
@@ -35,7 +35,7 @@ class TestConfig:
         assert DB_TYPE == "sqlite"
 
     def test_thresholds_are_set(self):
-        from config import YIELD_DROP_THRESHOLD, TEMP_MAX_COLD_ROOM, MAX_WEEKLY_HOURS
+        from config import MAX_WEEKLY_HOURS, TEMP_MAX_COLD_ROOM, YIELD_DROP_THRESHOLD
         assert YIELD_DROP_THRESHOLD == 5.0
         assert TEMP_MAX_COLD_ROOM == 5.0
         assert MAX_WEEKLY_HOURS == 48
