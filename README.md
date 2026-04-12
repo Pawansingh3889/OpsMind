@@ -26,7 +26,7 @@ Includes production ERP integration with 19 tables covering batch-centric runs, 
 </div>
 
 ```
-$ ollama pull phi3:mini
+$ ollama pull gemma3:12b
 $ streamlit run app.py
 
 ┌─────────────────────────────────────────────────┐
@@ -69,7 +69,7 @@ User asks: "What was yesterday's waste?"
       ▼
 ┌─────────────┐     ┌──────────────────┐     ┌──────────────┐
 │ Schema       │────▶│ Pick 4 tables    │────▶│ Ollama LLM   │
-│ Registry     │     │ from 19          │     │ (Phi3/Mistral)│
+│ Registry     │     │ from 19          │     │ (Gemma3 12B)  │
 │ (7 domains)  │     │ (domain match)   │     │              │
 └─────────────┘     └──────────────────┘     └──────────────┘
                                                     │
@@ -144,8 +144,7 @@ User asks: "What was yesterday's waste?"
 ```bash
 # Step 1: Get Ollama running
 curl -fsSL https://ollama.com/install.sh | sh
-ollama pull phi3:mini       # 2.3 GB, runs on 8GB RAM
-ollama pull mistral:7b      # optional, better accuracy
+ollama pull gemma3:12b      # default model, better SQL accuracy
 
 # Step 2: Clone and install
 git clone https://github.com/Pawansingh3889/OpsMind.git
@@ -250,7 +249,7 @@ production:
 
 | Layer | Tool | What it does |
 |---|---|---|
-| LLM | Ollama (Phi3 Mini / Mistral 7B) | English → SQL, result explanation |
+| LLM | Ollama (Gemma 3 12B) | English → SQL, result explanation |
 | Database | SQLAlchemy | SQLite (demo) + SQL Server (production) |
 | Vector Search | ChromaDB + sentence-transformers | PDF search (RAG) |
 | UI | Streamlit (7 tabs) | Dashboard, chat, charts |

@@ -4,7 +4,7 @@
 
 ## Project Overview
 
-OpsMind is an on-prem, natural-language-to-SQL query tool for manufacturing (fish processing). It lets factory operators ask questions in English and get SQL results, charts, and plain-English explanations -- all offline, with no cloud API keys required. The LLM runs locally via Ollama (Phi3 Mini or Mistral 7B).
+OpsMind is an on-prem, natural-language-to-SQL query tool for manufacturing (fish processing). It lets factory operators ask questions in English and get SQL results, charts, and plain-English explanations -- all offline, with no cloud API keys required. The LLM runs locally via Ollama (Gemma 3 12B).
 
 ## Architecture
 
@@ -78,7 +78,7 @@ All 36 tests are in `tests/test_core.py`. Tests auto-seed the demo database if i
 
 ```bash
 # Pull the LLM model
-ollama pull phi3:mini
+ollama pull gemma3:12b
 
 # Seed demo data
 python scripts/seed_demo_db.py
