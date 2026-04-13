@@ -4,7 +4,7 @@ OpsMind is an open-source AI query tool for manufacturing operations. It runs 10
 
 ## The Prime Directive
 
-**No paid APIs.** This project runs strictly on local models (Ollama), local vector search (ChromaDB), and local databases (SQLite/SQL Server). Do not submit PRs that introduce dependencies on OpenAI, Anthropic, or any paid cloud service.
+**No paid APIs.** This project runs strictly on local models (Ollama), local vector search (ChromaDB), and local databases (SQLite/SQL Server). Do not submit PRs that introduce dependencies on any paid cloud AI service.
 
 ## Quick Start
 
