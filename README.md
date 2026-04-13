@@ -11,6 +11,13 @@
 
 </div>
 
+## Links
+- [GitHub](https://github.com/Pawansingh3889/OpsMind)
+- [Documentation](https://pawansingh3889.github.io/OpsMind/)
+- [Profile](https://github.com/Pawansingh3889)
+- [PyPI (sql-sop)](https://pypi.org/project/sql-sop/)
+- [Download Stats](https://pypistats.org/packages/sql-sop)
+
 ---
 
 Manufacturing teams query data through Excel exports and IT requests. OpsMind lets any operator ask the database in English — offline, on-prem, no API keys.
