@@ -20,6 +20,21 @@
 
 ---
 
+## What Problem Does This Solve?
+
+Factory managers and shift leads need answers from production data — yield, waste, compliance, traceability. Today, they either write SQL themselves (error-prone), wait for IT (slow), or export to Excel (outdated by the time it opens). OpsMind lets anyone type a question in plain English and get an answer in 5 seconds, directly from the production database.
+
+### Key Features
+
+- **Ask in English, get answers in seconds** — no SQL knowledge required
+- **Runs entirely on your machine** — no data leaves the factory network
+- **SQL injection protection** — validates every query before execution
+- **Covers 7 business areas** — production, waste, orders, compliance, staff, suppliers, traceability
+- **Smart alerts** — flags yield drops, temperature breaches, and overtime automatically
+- **Domain-aware** — loads compliance, production, and waste rules at runtime for context-aware answers
+
+---
+
 Manufacturing teams query data through Excel exports and IT requests. OpsMind lets any operator ask the database in English — offline, on-prem, no API keys.
 
 Includes production ERP integration with 19 tables covering batch-centric runs, waterfall yield tracking (RSPCA/GG/Almaria tiers), batch lineage for OCM scan-back traceability, and shelf life management.
