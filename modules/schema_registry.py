@@ -167,8 +167,13 @@ def get_tables_for_domain(domain):
 
 
 def get_prompt_for_question(question):
-    """Generate the optimal SQL prompt for a question — only relevant tables."""
+    """Generate the optimal SQL prompt for a question — only relevant tables.
+
+    Injects runtime domain documentation when available so the LLM
+    understands business thresholds, shift patterns, and compliance rules.
+    """
     from modules.sql_dialect import date_hints
+    from modules.domain_docs import get_domain_prompt_section
 
     domain = detect_domain(question)
     tables = get_tables_for_domain(domain)
@@ -184,11 +189,14 @@ def get_prompt_for_question(question):
     tables_str = "\n".join(table_lines)
     hints = date_hints()
 
+    # Inject domain knowledge when a doc exists for this domain
+    domain_section = get_domain_prompt_section(domain) or ""
+
     return f"""Convert this question to SQL. Return ONLY the SQL query, nothing else.
 
 TABLES:
 {tables_str}
-
+{domain_section}
 RULES: {hints} JOIN tables for names. Add ORDER BY. ONLY return SQL."""
 
 

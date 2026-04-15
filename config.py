@@ -38,6 +38,12 @@ VERSION = "0.3.0"
 SCHEMA_CONFIG = os.getenv("SCHEMA_CONFIG", "schema.yaml")
 SCHEMA_MODE = os.getenv("SCHEMA_MODE", "auto")  # "auto" or "mapped"
 
+# SQL validation
+SQL_MAX_ROWS = int(os.getenv("OPSMIND_SQL_MAX_ROWS", "1000"))
+
+# Domain documentation (runtime-loaded business rules)
+DOMAIN_DOCS_DIR = os.getenv("OPSMIND_DOMAIN_DOCS", "docs/domains")
+
 # Alerts
 YIELD_DROP_THRESHOLD = 5.0  # Alert if yield drops more than 5% vs average
 TEMP_MAX_COLD_ROOM = 5.0    # Alert above 5°C

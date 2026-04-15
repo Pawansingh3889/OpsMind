@@ -4,7 +4,7 @@ Implements a state graph with 6 nodes:
   1. detect_domain   -- identifies the business domain from the question
   2. check_library   -- checks pre-built query library for a fast-path match
   3. generate_sql    -- LLM generates SQL if no library match found
-  4. validate_sql    -- safety check (SELECT/WITH only, no dangerous keywords)
+  4. validate_sql    -- schema-aware safety check via sql_validator
   5. execute_sql     -- runs the query via database.query()
   6. explain_results -- LLM explains results in plain business terms
 
@@ -15,6 +15,7 @@ Edge logic:
 
 from __future__ import annotations
 
+import logging
 from typing import TypedDict
 
 from langgraph.graph import END, StateGraph
@@ -23,6 +24,9 @@ from modules import database
 from modules.llm import get_response
 from modules.query_library import find_matching_query
 from modules.schema_registry import detect_domain, get_prompt_for_question
+from modules.sql_validator import validate_sql
+
+log = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # State
@@ -45,12 +49,6 @@ EXPLAIN_PROMPT = (
     "Explain these SQL results to a manager in 2-3 sentences. "
     "Use GBP and kg. Flag problems. Be concise."
 )
-
-DANGEROUS_KEYWORDS = [
-    "INSERT", "UPDATE", "DELETE", "DROP", "ALTER",
-    "TRUNCATE", "EXEC", "EXECUTE", "xp_", "sp_",
-]
-
 
 def detect_domain_node(state: AgentState) -> AgentState:
     """Node 1: Detect the business domain from the user question."""
@@ -85,23 +83,33 @@ def generate_sql_node(state: AgentState) -> AgentState:
 
 
 def validate_sql_node(state: AgentState) -> AgentState:
-    """Node 4: Safety gate -- only SELECT/WITH allowed, block dangerous keywords."""
+    """Node 4: Schema-aware safety gate using sql_validator.
+
+    Checks statement type, injection patterns, table/column existence,
+    and enforces a row limit.
+    """
     sql = state.get("sql", "")
-    first_word = sql.upper().strip().split()[0] if sql.strip() else ""
 
-    if first_word not in ("SELECT", "WITH"):
-        return {
-            "error": "For safety, OpsMind only runs read-only queries (SELECT/WITH). Please rephrase your question.",
-        }
+    try:
+        known_tables = database.discover_tables()
+    except Exception:
+        log.warning("Could not discover tables; skipping schema validation")
+        known_tables = None
 
-    sql_upper = sql.upper()
-    for kw in DANGEROUS_KEYWORDS:
-        if kw in sql_upper:
-            return {
-                "error": f'Blocked: query contains "{kw}". OpsMind is read-only.',
-            }
+    result = validate_sql(
+        sql,
+        known_tables=known_tables,
+        column_resolver=database.discover_columns,
+    )
 
-    return {}
+    if result.warnings:
+        log.warning("SQL validation warnings: %s", result.warnings)
+
+    if not result.is_valid:
+        return {"error": result.error_message}
+
+    # Use the (possibly amended) SQL with row-limit enforced
+    return {"sql": result.sql}
 
 
 def execute_sql_node(state: AgentState) -> AgentState:
