@@ -172,8 +172,8 @@ def get_prompt_for_question(question):
     Injects runtime domain documentation when available so the LLM
     understands business thresholds, shift patterns, and compliance rules.
     """
-    from modules.sql_dialect import date_hints
     from modules.domain_docs import get_domain_prompt_section
+    from modules.sql_dialect import date_hints
 
     domain = detect_domain(question)
     tables = get_tables_for_domain(domain)

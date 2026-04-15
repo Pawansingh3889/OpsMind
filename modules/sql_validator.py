@@ -11,11 +11,10 @@ from dataclasses import dataclass, field
 from typing import List, Optional
 
 import sqlparse
-from sqlparse.sql import IdentifierList, Identifier
-from sqlparse.tokens import Keyword, DML
+from sqlparse.sql import Identifier, IdentifierList
+from sqlparse.tokens import Keyword
 
 from config import DB_TYPE, SQL_MAX_ROWS
-
 
 # ---------------------------------------------------------------------------
 # Validation result
