@@ -20,3 +20,5 @@ sentry-sdk>=2.22
 pytest>=7.0.0
 ruff>=0.11
 mypy>=1.15
+fastmcp>=2.0.0
+langchain-mcp-adapters>=0.2.0

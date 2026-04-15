@@ -16,6 +16,10 @@ jobs:
           python-version: '3.11'
       - run: pip install ruff>=0.11
       - run: ruff check .
+      - name: Type check (ty)
+        run: |
+          pip install ty
+          ty check modules/ || true
 
   test:
     runs-on: ubuntu-latest

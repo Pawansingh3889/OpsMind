@@ -54,3 +54,10 @@ MAX_WEEKLY_HOURS = 48        # Working Time Regulations
 PROD_YIELD_MIN = 90.0        # Alert if run yield below 90%
 GIVEAWAY_PCT_THRESHOLD = 3.0 # Alert if giveaway exceeds 3%
 NC_CRITICAL_OPEN_DAYS = 2    # Alert if critical NC open > 2 days
+
+# MCP Servers
+MCP_DB_HOST = os.getenv("MCP_DB_HOST", "localhost")
+MCP_DB_PORT = int(os.getenv("MCP_DB_PORT", "9000"))
+MCP_DOC_HOST = os.getenv("MCP_DOC_HOST", "localhost")
+MCP_DOC_PORT = int(os.getenv("MCP_DOC_PORT", "9001"))
+MCP_ENABLED = os.getenv("MCP_ENABLED", "false").lower() == "true"
