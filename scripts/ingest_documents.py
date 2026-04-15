@@ -11,7 +11,7 @@ SAMPLE_DOCS = {
     'HACCP_Plan_2024.pdf': {
         'category': 'HACCP',
         'content': """
-HACCP PLAN — Northshore Seafoods Ltd
+HACCP PLAN — Demo Seafoods Ltd
 Hazard Analysis and Critical Control Points
 
 CRITICAL CONTROL POINT 1: RECEIVING RAW MATERIALS
@@ -51,7 +51,7 @@ Effective Date: January 2024
 
 PURPOSE: To ensure all cold storage areas maintain temperatures within food safety limits.
 
-SCOPE: All cold rooms, freezers, and chilled dispatch areas at Northshore Seafoods.
+SCOPE: All cold rooms, freezers, and chilled storage areas at Demo Seafoods.
 
 PROCEDURE:
 1. Temperature checks must be performed and recorded every 2 hours during operating hours.
@@ -60,9 +60,9 @@ PROCEDURE:
 4. Acceptable temperature ranges:
    - Cold Room 1 (Fresh Fish): 0°C to 4°C
    - Cold Room 2 (Ready to eat): 0°C to 4°C
-   - Freezer 1: -18°C or below
-   - Dispatch Bay: 0°C to 5°C
-   - Production Floor: Below 12°C
+   - Zone D: -18°C or below
+   - Zone F: 0°C to 5°C
+   - Zone E: Below 12°C
 
 5. If temperature is outside acceptable range:
    a. Immediately inform the Shift Manager or Production Manager
@@ -112,12 +112,12 @@ ALLERGEN MANAGEMENT PROCEDURES:
 5. STAFF: All staff must wash hands and change gloves between handling different allergen products. Staff must not bring food containing allergens into production areas.
 """
     },
-    'Lidl_Product_Spec_Salmon.pdf': {
+    'Customer A_Product_Spec_Salmon.pdf': {
         'category': 'Customer Spec',
         'content': """
-LIDL UK — PRODUCT SPECIFICATION
+CUSTOMER A — PRODUCT SPECIFICATION
 Product: Atlantic Salmon Fillet (skinless, boneless)
-Supplier: Northshore Seafoods Ltd
+Supplier: Demo Seafoods Ltd
 Spec Number: LDL-SAL-2024-001
 
 PRODUCT DESCRIPTION:
@@ -138,7 +138,7 @@ QUALITY REQUIREMENTS:
 - Melanin marks: Acceptable if less than 5mm and on flesh side only
 
 SHELF LIFE:
-- Minimum 7 days shelf life on delivery to Lidl RDC
+- Minimum 7 days shelf life on delivery to Customer A RDC
 - Total shelf life: 10 days from production
 - Storage temperature: 0°C to 2°C
 
@@ -151,7 +151,7 @@ LABELLING REQUIREMENTS:
 DELIVERY:
 - Temperature on arrival: 0°C to 2°C (max 4°C)
 - Packaging must be intact and clean
-- Delivery to Lidl RDC by 06:00 on scheduled days
+- Delivery to Customer A RDC by 06:00 on scheduled days
 """
     },
     'Staff_Handbook_2024.pdf': {
@@ -170,7 +170,7 @@ HEALTH AND SAFETY:
 - All staff must wear provided PPE: hairnet, beard snood (if applicable), white coat, blue gloves, safety boots, ear protection (in noisy areas)
 - Report all accidents and near-misses to your Shift Manager immediately
 - Complete accident book entry for all incidents
-- First aiders: James Wilson (Days), Radu Popescu (Nights)
+- First aiders: James White (Days), Dan Miller (Nights)
 
 ABSENCE AND SICK PAY:
 - Notify your Shift Manager before your shift start time if unable to attend

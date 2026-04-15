@@ -28,7 +28,7 @@ certification for UK manufacturing sites.  Key audit areas:
 | Cold Room | -2 | 5 |
 | Freezer | -25 | -18 |
 | Blast Freezer | -35 | -25 |
-| Dispatch Bay | 0 | 8 |
+| Zone F | 0 | 8 |
 | Goods-In (chilled) | 0 | 5 |
 | Smoking Chamber | 25 | 32 (cold smoke) |
 

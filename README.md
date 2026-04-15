@@ -37,7 +37,7 @@ Factory managers and shift leads need answers from production data — yield, wa
 
 Manufacturing teams query data through Excel exports and IT requests. OpsMind lets any operator ask the database in English — offline, on-prem, no API keys.
 
-Includes production ERP integration with 19 tables covering batch-centric runs, waterfall yield tracking (RSPCA/GG/Almaria tiers), batch lineage for OCM scan-back traceability, and shelf life management.
+Includes production ERP integration with 19 tables covering batch-centric runs, waterfall yield tracking (Premium/Standard/Export tiers), batch lineage for OCM scan-back traceability, and shelf life management.
 
 ---
 

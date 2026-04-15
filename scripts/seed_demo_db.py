@@ -296,24 +296,24 @@ def seed():
     c.executemany('INSERT INTO products VALUES (?,?,?,?,?,?,?)', products)
 
     # === SUPPLIERS ===
-    suppliers = ['Nordic Catch Ltd', 'Scottish Seafoods', 'Grimsby Fish Co', 'Iceland Fresh', 'Norwegian Select']
+    suppliers = ['Supplier A', 'Supplier B', 'Supplier C', 'Supplier D', 'Supplier E']
 
     # === CUSTOMERS ===
-    customers = ['Lidl UK', 'Iceland Foods', 'Tesco', 'Morrisons', 'Aldi UK', 'Costco UK', 'Booker Wholesale']
+    customers = ['Customer A', 'Customer B', 'Customer C', 'Customer D', 'Customer E', 'Customer F', 'Customer G']
 
     # === STAFF ===
     staff_data = [
-        (1, 'Alex Morgan', 'Shift Manager', 'Days', 44, 14.50),
-        (2, 'Marek Kowalski', 'Line Operator', 'Days', 40, 11.44),
-        (3, 'Agne Kazlauskiene', 'Line Operator', 'Days', 40, 11.44),
-        (4, 'Radu Popescu', 'Line Operator', 'Nights', 48, 12.50),
-        (5, 'Priya Desai', 'Quality Control', 'Days', 38, 13.00),
-        (6, 'Tomasz Nowak', 'Forklift Driver', 'Days', 42, 12.00),
-        (7, 'Elena Gheorghe', 'Packer', 'Days', 40, 11.44),
-        (8, 'James Wilson', 'Maintenance', 'Days', 45, 15.00),
-        (9, 'Aisha Khan', 'Line Operator', 'Nights', 40, 12.50),
-        (10, 'Vytautas Barkus', 'Line Operator', 'Nights', 50, 12.50),
-        (11, 'Sofia Ivanova', 'Packer', 'Days', 36, 11.44),
+        (1, 'Sam Taylor', 'Shift Manager', 'Days', 44, 14.50),
+        (2, 'Mike Brown', 'Line Operator', 'Days', 40, 11.44),
+        (3, 'Anna Green', 'Line Operator', 'Days', 40, 11.44),
+        (4, 'Dan Miller', 'Line Operator', 'Nights', 48, 12.50),
+        (5, 'Priya Patel', 'Quality Control', 'Days', 38, 13.00),
+        (6, 'Tom Clark', 'Forklift Driver', 'Days', 42, 12.00),
+        (7, 'Elena Davis', 'Packer', 'Days', 40, 11.44),
+        (8, 'James White', 'Maintenance', 'Days', 45, 15.00),
+        (9, 'Amy Jones', 'Line Operator', 'Nights', 40, 12.50),
+        (10, 'Victor Black', 'Line Operator', 'Nights', 50, 12.50),
+        (11, 'Sarah Hill', 'Packer', 'Days', 36, 11.44),
     ]
     c.executemany('INSERT INTO staff VALUES (?,?,?,?,?,?)', staff_data)
 
@@ -391,9 +391,9 @@ def seed():
                        date_str, delivery, status, round(price, 2)))
 
         # Temperature logs (every 2 hours, 5 locations)
-        locations = ['Cold Room 1', 'Cold Room 2', 'Freezer 1', 'Production Floor', 'Dispatch Bay']
-        base_temps = {'Cold Room 1': 2.0, 'Cold Room 2': 2.5, 'Freezer 1': -18.0,
-                     'Production Floor': 12.0, 'Dispatch Bay': 5.0}
+        locations = ['Cold Room 1', 'Cold Room 2', 'Zone D', 'Zone E', 'Zone F']
+        base_temps = {'Cold Room 1': 2.0, 'Cold Room 2': 2.5, 'Zone D': -18.0,
+                     'Zone E': 12.0, 'Zone F': 5.0}
         for hour in range(0, 24, 2):
             for loc in locations:
                 temp = base_temps[loc] + random.uniform(-1.5, 1.5)
@@ -411,7 +411,7 @@ def seed():
         (2, 'BRC_Audit_Report_2024.pdf', 'Audit', today.strftime('%Y-%m-%d'), 'BRC Global Standard for Food Safety audit report'),
         (3, 'SOP_Cold_Room_Temperature.pdf', 'SOP', today.strftime('%Y-%m-%d'), 'Standard operating procedure for cold room temperature monitoring'),
         (4, 'SOP_Allergen_Management.pdf', 'SOP', today.strftime('%Y-%m-%d'), 'Allergen management and labelling procedures'),
-        (5, 'Lidl_Product_Spec_Salmon.pdf', 'Customer Spec', today.strftime('%Y-%m-%d'), 'Lidl product specification for salmon fillets'),
+        (5, 'Customer A_Product_Spec_Salmon.pdf', 'Customer Spec', today.strftime('%Y-%m-%d'), 'Customer A product specification for salmon fillets'),
         (6, 'Iceland_Product_Spec_Cod.pdf', 'Customer Spec', today.strftime('%Y-%m-%d'), 'Iceland product specification for breaded cod'),
         (7, 'Staff_Handbook_2024.pdf', 'HR', today.strftime('%Y-%m-%d'), 'Employee handbook with health and safety procedures'),
         (8, 'Cleaning_Schedule.pdf', 'SOP', today.strftime('%Y-%m-%d'), 'Daily and weekly cleaning schedule for all areas'),
@@ -450,18 +450,18 @@ def seed():
 
     # Traceability batches
     trace_data = [
-        ('TR-0401', 'BC-COD-8831', 'North Sea Catch Ltd', 'cod', 'North Sea IV', 'trawl', 'Harvest Moon', '2025-03-28', '2025-03-28', '2025-03-30', 1.2, '2025-04-06', 'UK', 'MSC'),
-        ('TR-0402', 'BC-SAL-4421', 'Highland Salmon Co', 'salmon', 'Scotland West', 'farmed', None, '2025-03-29', '2025-03-29', '2025-03-31', 0.8, '2025-04-07', 'UK', 'ASC'),
-        ('TR-0403', 'BC-HAD-7712', 'Nordic Fish Supply', 'haddock', 'Norwegian Sea', 'line caught', 'Polar Star', '2025-03-27', '2025-03-27', '2025-03-30', 1.5, '2025-04-08', 'Norway', 'MSC'),
-        ('TR-0404', 'BC-COD-8832', 'North Sea Catch Ltd', 'cod', 'North Sea IV', 'trawl', 'Sea Ranger', '2025-04-01', '2025-04-01', '2025-04-02', 1.0, '2025-04-09', 'UK', 'MSC'),
-        ('TR-0405', 'BC-MAC-2201', 'Cornish Pelagic Ltd', 'mackerel', 'Celtic Sea VII', 'purse seine', 'Atlantic Spirit', '2025-03-30', '2025-03-30', '2025-04-01', 0.5, '2025-04-14', 'UK', 'MSC'),
-        ('TR-0406', 'BC-PRN-5501', 'Pacific Shellfish Co', 'prawn', 'Indian Ocean', 'farmed', None, '2025-02-15', '2025-02-15', '2025-03-20', -18.0, '2025-08-15', 'Vietnam', 'ASC'),
+        ('TR-0401', 'BC-COD-8831', 'Supplier F', 'cod', 'North Sea IV', 'trawl', 'Harvest Moon', '2025-03-28', '2025-03-28', '2025-03-30', 1.2, '2025-04-06', 'UK', 'MSC'),
+        ('TR-0402', 'BC-SAL-4421', 'Supplier G', 'salmon', 'Scotland West', 'farmed', None, '2025-03-29', '2025-03-29', '2025-03-31', 0.8, '2025-04-07', 'UK', 'ASC'),
+        ('TR-0403', 'BC-HAD-7712', 'Supplier H', 'haddock', 'Norwegian Sea', 'line caught', 'Polar Star', '2025-03-27', '2025-03-27', '2025-03-30', 1.5, '2025-04-08', 'Norway', 'MSC'),
+        ('TR-0404', 'BC-COD-8832', 'Supplier F', 'cod', 'North Sea IV', 'trawl', 'Sea Ranger', '2025-04-01', '2025-04-01', '2025-04-02', 1.0, '2025-04-09', 'UK', 'MSC'),
+        ('TR-0405', 'BC-MAC-2201', 'Supplier I', 'mackerel', 'Celtic Sea VII', 'purse seine', 'Atlantic Spirit', '2025-03-30', '2025-03-30', '2025-04-01', 0.5, '2025-04-14', 'UK', 'MSC'),
+        ('TR-0406', 'BC-PRN-5501', 'Supplier J', 'prawn', 'Indian Ocean', 'farmed', None, '2025-02-15', '2025-02-15', '2025-03-20', -18.0, '2025-08-15', 'Vietnam', 'ASC'),
     ]
     for t in trace_data:
         c.execute('INSERT INTO prod_traceability (trace_id, batch_code, supplier, species, catch_area, catch_method, vessel_name, landing_date, kill_date, received_date, received_temp_c, use_by_date, country_origin, certified) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)', t)
 
     # Production runs (30 days of data)
-    run_operators = ['AMORGAN', 'MKOWALSKI', 'PDESAI', 'AKAZLAUSKIENE', 'RPOPESCU']
+    run_operators = ['STAYLOR', 'MBROWN', 'PPATEL', 'AGREEN', 'DMILLER']
     run_id = 7200
     run_records = []
     for day_offset in range(30):

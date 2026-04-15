@@ -5,7 +5,7 @@ OpsMind organises 19 database tables into 7 business domains. The domain detecti
 ## Domains
 
 ### Production
-**Keywords**: yield, batch, run, production, output, pack, line, rspca, gg, almaria
+**Keywords**: yield, batch, run, production, output, pack, line, rspca, gg, export
 **Tables**: production_runs, products, production_lines
 **Example questions**: "What was today's yield by product?", "Which line had the highest output this week?"
 

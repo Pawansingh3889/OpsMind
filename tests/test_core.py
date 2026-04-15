@@ -96,7 +96,7 @@ class TestSchemaRegistry:
 
     def test_detect_domain_orders(self):
         from modules.schema_registry import detect_domain
-        assert detect_domain("pending orders for Lidl") == "orders"
+        assert detect_domain("pending orders for Customer A") == "orders"
         assert detect_domain("customer delivery schedule") == "orders"
 
     def test_detect_domain_temperature(self):
