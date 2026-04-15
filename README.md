@@ -301,13 +301,18 @@ OpsMind will automatically create the `documents` table and the pgvector extensi
 
 | Layer | Tool | What it does |
 |---|---|---|
-| LLM | Ollama (Gemma 3 12B) | English → SQL, result explanation |
+| LLM | Ollama (Gemma 3 12B) | English to SQL, result explanation |
+| Agent | LangGraph (6-node state graph) | Structured NL-to-SQL pipeline with conditional routing |
+| MCP Servers | FastMCP (database + doc search) | Decoupled tool servers via Model Context Protocol |
+| SQL Validation | sqlparse + custom validator | Injection detection, schema checks, row limits |
 | Database | SQLAlchemy | SQLite (demo) + SQL Server (production) |
-| Vector Search | ChromaDB or PostgreSQL+pgvector + sentence-transformers | PDF search (RAG) |
+| Vector Search | ChromaDB or PostgreSQL+pgvector | PDF and SOP search (RAG) |
+| Domain Docs | Runtime-loaded markdown | Compliance, production, waste rules injected into LLM context |
 | UI | Streamlit (7 tabs) | Dashboard, chat, charts |
 | Charts | Plotly | Production and waste visualisation |
-| Config | YAML | Schema registry — 7 domains, up to 147 tables |
-| Tests | pytest | 36 unit + integration tests |
+| Config | YAML + env vars | Schema registry, alert thresholds, MCP settings |
+| Tests | pytest | Unit + integration tests |
+| Lint | ruff + ty (Astral) | Linting and type checking in CI |
 
 ---
 
@@ -336,7 +341,34 @@ User Question (plain English)
 
 RAG: ChromaDB or PostgreSQL pgvector
 Monitoring: Sentry (opt-in)
+
+MCP Servers (opt-in):
+    [Database Server :9000] --- query, discover tables/columns, domain schema
+    [Doc Search Server :9001] --- semantic search, domain context
+    [MCP Client] --- connects to servers or falls back to direct module calls
 ```
+
+## MCP Server Architecture
+
+OpsMind can optionally expose database and document search as [MCP](https://modelcontextprotocol.io/) servers, decoupling data access from agent logic. This follows patterns from the PyCon DE 2026 talk on building agentic systems with LangGraph and MCP.
+
+| Server | Port | Tools |
+|---|---|---|
+| Database | 9000 | `query_database`, `discover_tables`, `discover_columns`, `get_schema_for_domain` |
+| Doc Search | 9001 | `search_documents`, `get_document_count`, `get_domain_context` |
+
+MCP is opt-in. Set `MCP_ENABLED=true` to use the servers. When disabled (default), OpsMind calls modules directly — no behaviour change.
+
+```bash
+# Start MCP servers
+python -m mcp_servers.database_server
+python -m mcp_servers.doc_search_server
+
+# Run OpsMind with MCP
+MCP_ENABLED=true streamlit run app.py
+```
+
+See `specs/mcp-servers.md` for full documentation.
 
 ## Agent Architecture
 
@@ -361,7 +393,7 @@ question -> [detect_domain] -> [check_library] --match--> [validate_sql] -> [exe
 
 **Pre-built library fast path** -- the 18 most common production questions bypass LLM generation entirely, returning tested SQL in milliseconds.
 
-**SQL safety validation** -- every query passes through a two-layer check (allowlist + blocklist) before execution. INSERT, UPDATE, DELETE, DROP, and other write operations are always blocked.
+**SQL safety validation** -- every query passes through a 5-stage validation pipeline: statement type check, injection pattern detection (tautologies, UNION, comments, stacked queries), table existence, column existence, and automatic row limit enforcement. See `specs/security.md` for the full threat model.
 
 **Structured state flow** -- the full state `{question, domain, sql, results, explanation, error}` flows through each node, making the pipeline observable and debuggable.
 
