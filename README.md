@@ -188,6 +188,45 @@ streamlit run app.py
 
 Or one-liner: `make setup && make run`
 
+## Docker deployment (production)
+
+Isolated deployment pattern inspired by PyCon DE 2026: "Building Secure Environments for CLI Code Agents" (Nezbeda).
+
+```bash
+# One-command deployment: app + Ollama in isolated containers
+docker compose up -d
+
+# OpsMind: http://localhost:8501
+# Ollama:  http://localhost:11434
+```
+
+What this gives you:
+- OpsMind runs as non-root user in a minimal Python 3.11 container
+- Ollama runs in a separate container (isolated bridge network)
+- Model weights persist in a named volume
+- Logs persist outside containers at `./logs/`
+- Health checks on both services with auto-restart
+- No secrets in images — all configuration via environment variables
+
+## Audit logging
+
+Every agent interaction is logged to `logs/audit.jsonl` as structured JSON.
+
+```bash
+# Last 10 SQL executions
+jq -c 'select(.event == "sql_executed")' logs/audit.jsonl | tail -10
+
+# All validation failures
+jq -c 'select(.event == "sql_validated" and .passed == false)' logs/audit.jsonl
+
+# Questions per day
+jq -r 'select(.event == "question_asked") | .timestamp[:10]' logs/audit.jsonl | sort | uniq -c
+```
+
+Events logged: `question_asked`, `sql_generated`, `sql_validated`, `sql_executed`, `llm_call`.
+
+Required for BRC traceability — every query, who asked, what SQL ran, what came back.
+
 ---
 
 ## Run the tests

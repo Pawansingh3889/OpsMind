@@ -16,11 +16,18 @@ Edge logic:
 from __future__ import annotations
 
 import logging
+import time
 from typing import TypedDict
 
 from langgraph.graph import END, StateGraph
 
 from modules import database
+from modules.audit_log import (
+    log_execution,
+    log_question,
+    log_sql_generated,
+    log_validation,
+)
 from modules.llm import get_response
 from modules.query_library import find_matching_query
 from modules.schema_registry import detect_domain, get_prompt_for_question
@@ -52,6 +59,7 @@ EXPLAIN_PROMPT = (
 
 def detect_domain_node(state: AgentState) -> AgentState:
     """Node 1: Detect the business domain from the user question."""
+    log_question(state["question"])
     domain = detect_domain(state["question"])
     return {"domain": domain}
 
@@ -60,6 +68,7 @@ def check_library_node(state: AgentState) -> AgentState:
     """Node 2: Check the pre-built query library for a fast-path match."""
     sql, _desc = find_matching_query(state["question"])
     if sql:
+        log_sql_generated(sql.strip(), state.get("domain", "unknown"), source="library")
         return {"sql": sql.strip()}
     return {}
 
@@ -79,6 +88,7 @@ def generate_sql_node(state: AgentState) -> AgentState:
     if sql.lower().startswith("sql"):
         sql = sql[3:].strip()
 
+    log_sql_generated(sql, state.get("domain", "unknown"), source="llm")
     return {"sql": sql}
 
 
@@ -106,18 +116,26 @@ def validate_sql_node(state: AgentState) -> AgentState:
         log.warning("SQL validation warnings: %s", result.warnings)
 
     if not result.is_valid:
+        log_validation(passed=False, warnings=result.warnings, error=result.error_message)
         return {"error": result.error_message}
 
+    log_validation(passed=True, warnings=result.warnings)
     # Use the (possibly amended) SQL with row-limit enforced
     return {"sql": result.sql}
 
 
 def execute_sql_node(state: AgentState) -> AgentState:
     """Node 5: Execute the validated SQL query."""
+    sql = state.get("sql", "")
+    t0 = time.perf_counter()
     try:
-        df = database.query(state["sql"])
+        df = database.query(sql)
+        duration_ms = (time.perf_counter() - t0) * 1000
+        log_execution(sql, row_count=len(df), duration_ms=duration_ms)
         return {"results": df}
     except Exception as exc:
+        duration_ms = (time.perf_counter() - t0) * 1000
+        log_execution(sql, row_count=0, duration_ms=duration_ms, error=str(exc))
         return {
             "results": None,
             "error": f"SQL error: {exc}. Try rephrasing your question.",

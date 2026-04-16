@@ -1,0 +1,67 @@
+# OpsMind on-premises deployment.
+# Inspired by PyCon DE 2026: "Building Secure Environments for CLI Code Agents" (Nezbeda).
+# - Isolated network
+# - Separate containers for app and LLM
+# - Read-only root filesystem where possible
+# - Logs persist outside containers
+# - No secrets in images (env vars only)
+
+services:
+  opsmind:
+    build: .
+    container_name: opsmind-app
+    ports:
+      - "8501:8501"
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-gemma3:12b}
+      OPSMIND_DB: ${OPSMIND_DB:-sqlite:///data/demo.db}
+      OPSMIND_CHROMA_DIR: /app/data/chroma_store
+      OPSMIND_LOG_DIR: /app/logs
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+      MCP_ENABLED: ${MCP_ENABLED:-false}
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    depends_on:
+      ollama:
+        condition: service_healthy
+    networks:
+      - opsmind-net
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: opsmind-ollama
+    volumes:
+      - ollama-models:/root/.ollama
+    ports:
+      - "11434:11434"
+    networks:
+      - opsmind-net
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+    restart: unless-stopped
+    # Pull model on startup if not present
+    entrypoint: >
+      /bin/sh -c "
+      ollama serve &
+      sleep 5 &&
+      ollama pull ${OLLAMA_MODEL:-gemma3:12b} &&
+      wait
+      "
+
+networks:
+  opsmind-net:
+    driver: bridge
+
+volumes:
+  ollama-models:
+    name: opsmind-ollama-models
