@@ -30,7 +30,6 @@ if str(_ROOT) not in sys.path:
 
 from modules.sql_validator import validate_sql  # noqa: E402
 
-
 # ---------------------------------------------------------------------------
 # Stage 1 — statement type
 # ---------------------------------------------------------------------------
