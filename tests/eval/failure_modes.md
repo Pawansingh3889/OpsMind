@@ -18,7 +18,7 @@ _no entries yet_
 
 Pattern matched, but not the one the golden set expected — two patterns overlap. Fix is usually reordering patterns or tightening a regex, not adding a new one.
 
-- 2026-04-18  q11  "yield by production line last week"  pattern 5 `(yield|yields).*(product|by product|trend|average)` wins over pattern 11 `yield.*(line|production line)` because "product" greedily matches "production". Worked around in the golden set with "yield per line"; real fix is tightening pattern 5 to `\bproduct\b` or reordering.  (fixed: pending — separate PR)
+- 2026-04-18  q11  "yield by production line last week"  pattern 5 `(yield|yields).*(product|by product|trend|average)` wins over pattern 11 `yield.*(line|production line)` because "product" greedily matches "production". Fixed by tightening pattern 5's alternatives to `\bproduct\b`, `\bby\s+product\b`, etc.  (fixed: see commit — query_library.py pattern 5)
 
 ## library/sql-error
 

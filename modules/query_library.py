@@ -97,7 +97,10 @@ QUERY_LIBRARY = [
     },
     {
         "patterns": [
-            r"(yield|yields).*(product|by product|trend|average)",
+            # Word-bounded "product" so we don't greedily match "production"
+            # and steal questions meant for the per-line yield pattern
+            # further down. Caught by tests/eval/ (library/wrong-pattern).
+            r"(yield|yields).*\b(product|by\s+product|trend|average)\b",
             r"average.*yield",
             r"(best|worst).*yield",
         ],

@@ -82,11 +82,10 @@ samples:
     expected_columns: [supplier, deliveries, total_kg, avg_temp_on_arrival]
 
   - id: q11
-    # Phrasing deliberately avoids "product" because pattern 5
-    # (`(yield|yields).*(product|...)`) is earlier in the library list and
-    # greedily matches anything containing "production" via the "product"
-    # alternative. See failure_modes.md > library/wrong-pattern.
-    question: yield per line last week
+    # Natural operator phrasing — was temporarily reworded to "yield per line"
+    # while pattern 5 was greedy-matching "production". Pattern 5 now uses
+    # a word boundary, so this phrasing correctly reaches pattern 11.
+    question: yield by production line last week
     path: library
     expected_pattern_description: Yield by production line (last 7 days)
     expected_columns:
