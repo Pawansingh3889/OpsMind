@@ -49,17 +49,34 @@ mcp = FastMCP(
 
 @mcp.tool()
 def query_database(sql: str) -> str:
-    """Execute a read-only SQL query and return results as JSON.
+    """Run a read-only SQL query against the factory ERP database and return rows as JSON.
 
-    Only SELECT and WITH statements are permitted. The underlying
-    database module enforces read-only access.
+    **Use this when** the user asks a factual operational question that needs
+    data — e.g. "how much did we produce yesterday", "list orders for Customer A
+    due this week", "which batch used supplier X". Always call
+    ``get_schema_for_domain`` first if you don't already know the column names,
+    otherwise the query will fail with a schema error.
+
+    **Safety:** only ``SELECT`` and ``WITH`` statements are allowed. Any
+    ``INSERT``/``UPDATE``/``DELETE``/``DROP``/``ALTER``/``TRUNCATE``/``EXEC``
+    keyword is rejected before execution. The connection is read-only at the
+    database layer as well, so a mistakenly-constructed write would also fail.
 
     Args:
-        sql: A valid SQL SELECT or WITH statement.
+        sql: A single SQL ``SELECT`` or ``WITH`` statement. SQLite dialect on
+            the demo database (``date('now', '-7 days')`` for date arithmetic);
+            T-SQL dialect on production SQL Server deployments.
 
     Returns:
-        A JSON string containing the query results as a list of row-dicts,
-        or a JSON object with an ``error`` key on failure.
+        A JSON string containing the rows as a list of objects, one per row,
+        with ISO-8601 date strings. On failure returns
+        ``{"error": "<message>"}`` — inspect the error and retry with
+        corrected SQL rather than asking the user what went wrong.
+
+    Example:
+        Input: ``SELECT customer, SUM(quantity_kg) AS total FROM orders
+        WHERE status='pending' GROUP BY customer``
+        Output: ``[{"customer": "Customer A", "total": 420.0}, ...]``
     """
     try:
         df = database.query(sql)
@@ -71,10 +88,18 @@ def query_database(sql: str) -> str:
 
 @mcp.tool()
 def discover_tables() -> list[str]:
-    """List all table names in the connected database.
+    """List every table name in the connected database.
+
+    **Use this when** you don't know which tables exist — typically once at
+    the start of a session, or when ``query_database`` fails with an
+    unknown-table error. For day-to-day questions prefer
+    ``get_schema_for_domain`` instead: it returns a smaller, curated set
+    scoped to the business area so the LLM context stays focused.
 
     Returns:
-        A list of table name strings.
+        A list of table-name strings in alphabetical order. On the demo
+        database this is roughly 20 tables; on a real factory ERP it may
+        exceed 100.
     """
     try:
         return database.discover_tables()
@@ -85,13 +110,20 @@ def discover_tables() -> list[str]:
 
 @mcp.tool()
 def discover_columns(table_name: str) -> list[str]:
-    """List column names for a specific table.
+    """List every column in a specific table.
+
+    **Use this when** you're writing SQL against a table whose exact column
+    names you aren't sure about (especially common on the production ERP
+    where columns use PascalCase, e.g. ``ProductionDate``, not
+    ``production_date``). Call this instead of guessing; a wrong column name
+    causes the query to fail.
 
     Args:
-        table_name: The exact table name as returned by ``discover_tables``.
+        table_name: Exact table name as returned by ``discover_tables`` or
+            ``get_schema_for_domain``. Case-sensitive on some backends.
 
     Returns:
-        A list of column name strings.
+        A list of column-name strings in the table's defined order.
     """
     try:
         return database.discover_columns(table_name)
@@ -102,20 +134,35 @@ def discover_columns(table_name: str) -> list[str]:
 
 @mcp.tool()
 def get_schema_for_domain(domain: str) -> str:
-    """Return the relevant tables and columns for a business domain.
+    """Return only the tables relevant to a business area, with their columns.
 
-    OpsMind organises its 19+ database tables into seven business domains
-    (production, orders, compliance, traceability, temperature, staff,
-    stock). This tool returns only the tables relevant to the requested
-    domain, keeping LLM context focused and accurate.
+    **Use this when** you're about to write SQL and want to keep the LLM
+    context tight. It's the preferred entry point for almost every question —
+    ``discover_tables`` is a fallback for when the domain mapping has a gap.
+
+    **Recognised domains** (pick the best match for the user's question):
+
+    - ``production``   — output, yield, waste, production runs
+    - ``orders``       — customer orders, delivery dates, shipped vs pending
+    - ``traceability`` — batch lineage from raw material to dispatch
+    - ``temperature``  — cold room / freezer / dispatch temperature logs
+    - ``staff``        — employees, shift patterns, weekly hours, overtime
+    - ``stock``        — raw materials, expiry dates, suppliers
+    - ``compliance``   — allergens, non-conformance, certified batches
 
     Args:
-        domain: One of the recognised domain names (e.g. ``"production"``,
-            ``"compliance"``).
+        domain: One of the seven names above. Anything else returns an error.
 
     Returns:
-        A formatted string listing tables and their columns for the domain,
-        or a JSON object with an ``error`` key if the domain is unknown.
+        A JSON object mapping table name to a comma-separated column list.
+        Example::
+
+            {
+              "products": "id, name, species, unit_cost_per_kg, ...",
+              "production": "id, product_id, batch_code, date, ..."
+            }
+
+        On an unknown domain returns ``{"error": "Unknown domain: <name>"}``.
     """
     try:
         tables = schema_registry.get_tables_for_domain(domain)

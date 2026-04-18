@@ -49,19 +49,44 @@ mcp = FastMCP(
 
 @mcp.tool()
 def search_documents(query: str, top_k: int = 5) -> str:
-    """Semantic search over factory documents (SOPs, audit reports, specs).
+    """Semantic-search factory SOPs, audit reports, product specs, and
+    compliance procedures.
 
-    Uses sentence-transformer embeddings to find the most relevant
-    document chunks for a natural-language query.
+    **Use this when** the question is about *how we do something* rather than
+    *what the data says* — cleaning protocols, allergen changeovers, audit
+    requirements, product specifications, supplier approval steps. For
+    numeric answers ("how many", "what was yesterday's yield") use
+    ``query_database`` instead.
+
+    Matches are ranked by cosine distance of sentence-transformer
+    embeddings, so the query doesn't need exact keywords — phrase it the
+    way an operator would ask. Results are chunks of the original documents
+    with enough surrounding context to answer, not just bare sentences.
 
     Args:
-        query: A natural-language search query (e.g. "allergen cleaning
-            protocol for Line 2").
-        top_k: Maximum number of results to return. Defaults to 5.
+        query: A natural-language question or topic. Examples that work
+            well: "allergen cleaning procedure between Line 2 runs", "what
+            certifications do MSC suppliers need", "cold-chain rules for
+            dispatch". 3–15 words is the sweet spot.
+        top_k: Maximum chunks to return. Defaults to 5. Increase to 10
+            when you need breadth (survey-style questions); keep at 3 for
+            a single focused answer.
 
     Returns:
-        A JSON string containing a list of result objects, each with
-        ``id``, ``text``, ``metadata``, and ``distance`` keys.
+        A JSON array of result objects::
+
+            [
+              {
+                "id": "sop_allergen_v3.pdf#chunk_4",
+                "text": "When changing over from a cereal line to a...",
+                "metadata": {"source": "sop_allergen_v3.pdf", "page": 8},
+                "distance": 0.187
+              },
+              ...
+            ]
+
+        Lower ``distance`` means a closer semantic match. On error returns
+        ``{"error": "<message>"}``.
     """
     try:
         results = doc_search.search(query, n_results=top_k)
@@ -73,10 +98,16 @@ def search_documents(query: str, top_k: int = 5) -> str:
 
 @mcp.tool()
 def get_document_count() -> int:
-    """Return the total number of document chunks in the vector store.
+    """Return how many document chunks are currently indexed.
+
+    **Use this when** the user asks "do you have the X procedure" or when
+    you want to sanity-check the knowledge base before telling the user no
+    documents were found (zero chunks means ingestion hasn't run, not that
+    the answer is unknown).
 
     Returns:
-        An integer count of indexed document chunks.
+        An integer count of indexed chunks, or ``-1`` if the vector store
+        is unreachable.
     """
     try:
         return doc_search.get_doc_count()
@@ -87,19 +118,30 @@ def get_document_count() -> int:
 
 @mcp.tool()
 def get_domain_context(domain: str) -> str:
-    """Load domain-specific documentation for LLM context injection.
+    """Load hand-curated business rules for one domain, as LLM prompt context.
 
-    Reads the markdown knowledge file for a business domain (e.g.
-    production thresholds, compliance rules, waste targets) and returns
-    it as a formatted prompt section.
+    **Use this when** you're about to write SQL or interpret a result and
+    want domain-specific thresholds or definitions — e.g. "what counts as a
+    temperature breach", "what yield is considered low", "BRCGS clauses
+    relevant to traceability". These are short authoritative notes, not
+    searched SOPs; call ``search_documents`` for longer procedural text.
+
+    **Available domains** (only these three have curated rules today):
+
+    - ``production`` — yield thresholds, shift definitions, waste targets
+    - ``compliance`` — BRCGS clauses, allergen handling, audit trail rules
+    - ``waste``      — waste-type categories and cost assumptions
+
+    Any other domain name returns an empty string — this is not an error,
+    just "no curated rules for that domain yet". In that case fall back to
+    ``search_documents`` with a relevant query.
 
     Args:
-        domain: One of the recognised domain names (e.g. ``"production"``,
-            ``"compliance"``, ``"waste"``).
+        domain: One of ``"production"``, ``"compliance"``, ``"waste"``.
 
     Returns:
-        A formatted markdown string with domain knowledge, or an empty
-        string if no documentation exists for the domain.
+        A markdown-formatted prompt section ready to prepend to a system
+        prompt, or an empty string if the domain has no curated rules.
     """
     try:
         section = domain_docs.get_domain_prompt_section(domain)
