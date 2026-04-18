@@ -1,10 +1,10 @@
-.PHONY: setup test run seed clean lint format typecheck
+.PHONY: setup test run seed clean lint format typecheck eval eval-library eval-llm
 
 setup:
 	pip install -r requirements.txt
 
 test:
-	python -m pytest tests/ -v
+	python -m pytest tests/ -v --ignore=tests/eval
 
 run:
 	streamlit run app.py
@@ -20,6 +20,18 @@ format:
 
 typecheck:
 	mypy modules/
+
+# Full eval — library path + LLM path. Requires Ollama with gemma3:12b locally.
+eval:
+	python -m pytest tests/eval/ -v
+
+# Library fast-path only — no Ollama needed, safe to run in CI.
+eval-library:
+	OPSMIND_EVAL_SKIP_LLM=1 python -m pytest tests/eval/ -v -m eval_library
+
+# LLM path only — iterate on prompts + model choice.
+eval-llm:
+	python -m pytest tests/eval/ -v -m eval_llm
 
 clean:
 	rm -rf data/demo.db __pycache__
