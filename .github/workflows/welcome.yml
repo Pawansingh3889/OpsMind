@@ -1,0 +1,51 @@
+name: Welcome first-time contributors
+
+# Posts a friendly message the first time someone opens a PR or issue.
+# Camila Maia's "hate the robot, not the maintainer" pattern (PyCon DE
+# 2026) — the bot handles the routine "welcome + links" step so the
+# maintainer isn't typing the same message by hand every week.
+
+on:
+  pull_request_target:
+    types: [opened]
+  issues:
+    types: [opened]
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  welcome:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/first-interaction@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          issue-message: |
+            Thanks for opening your first issue on OpsMind! A few pointers:
+
+            - If this is a **security** report, please close this issue and
+              file a private advisory instead — see [`SECURITY.md`](../blob/main/SECURITY.md).
+            - If this is a **feature request**, describe the problem it
+              solves, not just the solution — see [`CONTRIBUTING.md`](../blob/main/CONTRIBUTING.md).
+            - If this is a **bug report**, include reproduction steps,
+              Python version, OS, and Ollama model.
+
+            A maintainer will respond within 7 calendar days
+            (see [`GOVERNANCE.md`](../blob/main/GOVERNANCE.md)). If the issue
+            is suitable for a first-time contributor, expect a
+            `good first issue` label.
+          pr-message: |
+            Thanks for your first PR on OpsMind! Before review, please:
+
+            - Check that `make test`, `make lint`, and `make eval-library`
+              all pass locally.
+            - Fill out the PR template checklist (`make test` etc.).
+            - Add a `[Unreleased]` entry in `CHANGELOG.md` if the change is
+              user-facing.
+
+            First-PR-wins on the linked issue applies for 7 days
+            (see [`GOVERNANCE.md`](../blob/main/GOVERNANCE.md)). The
+            maintainer will review within 14 days of your last
+            response — don't hesitate to ping if it's been longer.
