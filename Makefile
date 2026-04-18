@@ -1,4 +1,4 @@
-.PHONY: setup test run seed clean lint format typecheck eval eval-library eval-llm
+.PHONY: setup test run seed clean lint format typecheck typecheck-ty eval eval-library eval-llm
 
 setup:
 	pip install -r requirements.txt
@@ -18,8 +18,15 @@ lint:
 format:
 	ruff format .
 
+# Strict local type check — mypy follows all the usual rules.
 typecheck:
 	mypy modules/
+
+# CI-parity type check — ty runs in .github/workflows/tests.yml as advisory.
+# Failures here are informational until the codebase is fully ty-clean; match
+# CI by not failing the target on type errors.
+typecheck-ty:
+	ty check modules/ || true
 
 # Full eval — library path + LLM path. Requires Ollama with gemma3:12b locally.
 eval:
