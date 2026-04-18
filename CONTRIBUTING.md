@@ -2,9 +2,16 @@
 
 OpsMind is an open-source AI query tool for manufacturing operations. It runs 100% locally — no cloud, no paid APIs, no data leaves your machine. We want to keep it that way.
 
+Before you start, skim these two neighbouring documents — they set expectations this file doesn't repeat:
+
+- [**`GOVERNANCE.md`**](GOVERNANCE.md) — who decides what, the first-PR-wins policy, response-time commitments, and the four hard scope lines.
+- [**`CODE_OF_CONDUCT.md`**](CODE_OF_CONDUCT.md) — the behavioural bar and how to report abuse.
+
+Security issues do **not** go in a public GitHub issue — read [**`SECURITY.md`**](SECURITY.md) first.
+
 ## The Prime Directive
 
-**No paid APIs.** This project runs strictly on local models (Ollama), local vector search (ChromaDB), and local databases (SQLite/SQL Server). Do not submit PRs that introduce dependencies on any paid cloud AI service.
+**No paid APIs.** This project runs strictly on local models (Ollama), local vector search (ChromaDB), and local databases (SQLite/SQL Server). Do not submit PRs that introduce dependencies on any paid cloud AI service. See `GOVERNANCE.md` § Scope discipline for the full four-line list.
 
 ## Quick Start
 
@@ -20,14 +27,20 @@ make run            # Start Streamlit app
 ## How to Contribute
 
 1. **Find an issue.** Look for issues tagged `good first issue` or `help wanted`.
-2. **Claim it.** Comment on the issue saying you are picking it up so we don't duplicate work.
+2. **Claim it.** Comment on the issue saying you are picking it up so we don't duplicate work. Your claim lasts 7 days; see `GOVERNANCE.md` § Issue assignment for the details.
 3. **Branch.** Fork the repo and create a branch (`feature/your-feature-name` or `bugfix/issue-description`).
 4. **Code.** Keep Python clean. Follow existing patterns. Comment non-obvious logic.
 5. **Test.** Add focused tests under `tests/unit/` (one file per module; see the
    existing files). Cross-module smoke tests continue to live in
    `tests/test_core.py`. Run `make test` before submitting.
 6. **Pull request.** Explain *what* you changed and *why*. Reference the issue number.
-   One logical change per commit makes review easier.
+   One logical change per commit; use conventional commit prefixes
+   (`feat:`, `fix:`, `docs:`, `chore:`, `ci:`, `test:`, `style:`) — the
+   existing git log has plenty of examples.
+
+Larger changes (new modules, new dependencies, API shape changes) start as
+an **issue with a proposal**, not a big surprise PR. The shape of the
+proposal is in `GOVERNANCE.md` § Decisions.
 
 ## Current Focus Areas
 
