@@ -6,8 +6,9 @@
 
 [![Docs](https://img.shields.io/badge/Docs-Website-0f172a?style=flat-square&logo=googlechrome&logoColor=white)](https://pawansingh3889.github.io/OpsMind/)
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white)]()
-[![Tests](https://img.shields.io/badge/Tests-36_passed-22c55e?style=flat-square&logo=pytest&logoColor=white)]()
-[![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)]()
+[![Tests](https://img.shields.io/badge/Tests-passing-22c55e?style=flat-square&logo=pytest&logoColor=white)](https://github.com/Pawansingh3889/OpsMind/actions)
+[![Eval](https://img.shields.io/badge/Eval-measured-2563eb?style=flat-square)](tests/eval/)
+[![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
 
 </div>
 
@@ -17,6 +18,7 @@
 - [Profile](https://github.com/Pawansingh3889)
 - [PyPI (sql-sop)](https://pypi.org/project/sql-sop/)
 - [Download Stats](https://pypistats.org/packages/sql-sop)
+- **Contributing:** [`CONTRIBUTING.md`](CONTRIBUTING.md) · [`GOVERNANCE.md`](GOVERNANCE.md) · [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) · [`SECURITY.md`](SECURITY.md)
 
 ---
 
@@ -231,24 +233,27 @@ Required for BRC traceability — every query, who asked, what SQL ran, what cam
 
 ## Run the tests
 
-```
-$ make test
+Three suites, three commands:
 
-tests/test_core.py::TestConfig::test_config_loads               PASSED
-tests/test_core.py::TestSQLDialect::test_days_ago_sqlite         PASSED
-tests/test_core.py::TestSchemaRegistry::test_detect_domain        PASSED
-tests/test_core.py::TestDatabase::test_query_returns_dataframe    PASSED
-tests/test_core.py::TestCompliance::test_trace_batch              PASSED
-tests/test_core.py::TestAlerts::test_check_all_alerts             PASSED
-tests/test_core.py::TestWastePredictor::test_predict_waste        PASSED
-tests/test_core.py::TestSQLAgentSafety::test_blocks_insert        PASSED
-tests/test_core.py::TestDocSearch::test_search_returns_list        PASSED
-... 27 more tests
-
-36 passed, 0 failed
+```bash
+make test           # cross-module smoke (tests/test_core.py) + per-module (tests/unit/)
+make eval-library   # library fast-path eval — no Ollama needed
+make eval           # full eval (library + LLM paths) — needs Ollama + gemma3:12b
 ```
 
-Covers: config, SQL dialect abstraction, schema registry, database queries, compliance checks, alert detection, waste prediction, SQL injection prevention, document search.
+Coverage at a glance:
+
+| Suite | File | What it covers |
+|---|---|---|
+| Smoke | `tests/test_core.py` | Config, SQL dialect, schema registry, database, compliance, alerts, waste, SQL safety, doc search — one test per concern. |
+| Per-module | `tests/unit/test_sql_validator.py` | Every stage of the 5-stage SQL validation pipeline (statement type, injection, table existence, column resolution, row-limit injection). |
+| Per-module | `tests/unit/test_query_library.py` | One canonical question per library pattern + explicit regex-collision guards. |
+| Per-module | `tests/unit/test_schema_registry.py` | Domain detection for all 7 domains, edge cases, registry contracts. |
+| Eval | `tests/eval/golden_set.yaml` | 20 factory questions — 14 library-path, 6 LLM-path. Judge compares result sets against the demo database. |
+
+Failure-mode taxonomy for the eval harness lives in
+[`tests/eval/failure_modes.md`](tests/eval/failure_modes.md) — it's a
+living document that grows as the LLM path hits real failures.
 
 ---
 
@@ -485,4 +490,23 @@ Right", PyCon DE 2026).
 
 ---
 
-**[Docs](https://pawansingh3889.github.io/OpsMind/)** &#183; **[Report Bug](https://github.com/Pawansingh3889/OpsMind/issues)** &#183; **[Request Feature](https://github.com/Pawansingh3889/OpsMind/issues)**
+## Contributing
+
+OpsMind is solo-maintained with an open door for contributors.
+
+- Read [`CONTRIBUTING.md`](CONTRIBUTING.md) for how to set up, test, and
+  open a PR.
+- Read [`GOVERNANCE.md`](GOVERNANCE.md) before large changes — roles,
+  response-time commitments, and the four hard scope lines live there.
+- Security issues go through [`SECURITY.md`](SECURITY.md) (private
+  advisory), not public issues.
+- Behavioural expectations are in [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
+- Third-party licence attributions are in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+
+Good first issues are labelled `good first issue`. First-PR-wins on any
+issue: claim by commenting, ship within 7 days, or the next contributor
+may take it.
+
+---
+
+**[Docs](https://pawansingh3889.github.io/OpsMind/)** &#183; **[Report Bug](https://github.com/Pawansingh3889/OpsMind/issues)** &#183; **[Request Feature](https://github.com/Pawansingh3889/OpsMind/issues)** &#183; **[Security](SECURITY.md)**
