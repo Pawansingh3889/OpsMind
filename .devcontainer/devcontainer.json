@@ -1,0 +1,29 @@
+{
+  "name": "OpsMind",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {}
+  },
+  "postCreateCommand": "pip install --upgrade pip && pip install -r requirements.txt && pre-commit install || true",
+  "postStartCommand": "python scripts/seed_demo_db.py",
+  "forwardPorts": [8501, 9000, 9001],
+  "portsAttributes": {
+    "8501": { "label": "Streamlit", "onAutoForward": "notify" },
+    "9000": { "label": "MCP database server" },
+    "9001": { "label": "MCP doc-search server" }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "charliermarsh.ruff",
+        "redhat.vscode-yaml"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "editor.formatOnSave": false
+      }
+    }
+  },
+  "remoteUser": "vscode"
+}
