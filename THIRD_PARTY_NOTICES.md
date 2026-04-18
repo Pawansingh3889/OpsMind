@@ -1,8 +1,9 @@
 # Third-party notices
 
-OpsMind is MIT-licensed (see `LICENSE`). The following third-party
-dependencies are redistributed at runtime via `requirements.txt`; each is
-governed by its own licence, which prevails over anything in this file.
+OpsMind is licensed under the Apache License, Version 2.0 (see `LICENSE`
+and `NOTICE`). The following third-party dependencies are redistributed
+at runtime via `requirements.txt`; each is governed by its own licence,
+which prevails over anything in this file.
 
 This document is informational — it is not a substitute for reading the
 upstream licences. The SPDX identifiers come from PyPI / the projects'

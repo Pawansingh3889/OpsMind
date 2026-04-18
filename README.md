@@ -8,7 +8,7 @@
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white)]()
 [![Tests](https://img.shields.io/badge/Tests-passing-22c55e?style=flat-square&logo=pytest&logoColor=white)](https://github.com/Pawansingh3889/OpsMind/actions)
 [![Eval](https://img.shields.io/badge/Eval-measured-2563eb?style=flat-square)](tests/eval/)
-[![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue?style=flat-square)](LICENSE)
 
 </div>
 
@@ -501,7 +501,7 @@ OpsMind is solo-maintained with an open door for contributors.
 - Security issues go through [`SECURITY.md`](SECURITY.md) (private
   advisory), not public issues.
 - Behavioural expectations are in [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
-- Third-party licence attributions are in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+- Third-party licence attributions are in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md); the project's own copyright notice is in [`NOTICE`](NOTICE).
 
 Good first issues are labelled `good first issue`. First-PR-wins on any
 issue: claim by commenting, ship within 7 days, or the next contributor

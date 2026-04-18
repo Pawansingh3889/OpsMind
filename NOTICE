@@ -1,0 +1,15 @@
+OpsMind
+Copyright 2025-2026 Pawan Singh Kapkoti
+
+This product includes software developed by Pawan Singh Kapkoti
+(https://github.com/Pawansingh3889/OpsMind) and released under the
+Apache License, Version 2.0.
+
+Third-party software redistributed at runtime via requirements.txt is
+listed in THIRD_PARTY_NOTICES.md. Each dependency is governed by its
+own licence; that licence prevails over anything in this NOTICE file.
+
+OpsMind does not redistribute model weights. Users pull Gemma 3 via
+Ollama at install time; Gemma 3 is governed by Google's Gemma Terms
+of Use (https://ai.google.dev/gemma/terms), not by this Apache 2.0
+grant.
