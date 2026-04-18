@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [main]
 
+# Opt into Node.js 24 for JavaScript actions ahead of the mandatory Sep 2026
+# switch. Closes #9. Actions (checkout@v4, setup-python@v5) now run on
+# Node.js 24 on all runners; if any action breaks, the fix is upstream.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   lint:
     runs-on: ubuntu-latest
