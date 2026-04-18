@@ -1,0 +1,184 @@
+# OpsMind golden evaluation set.
+#
+# Two paths, two accuracy numbers:
+#
+# - path: library  — question should match a query_library pattern (fast path,
+#   deterministic SQL). Test verifies the library picks the expected pattern
+#   and the returned SQL executes cleanly with the documented column set.
+#
+# - path: llm      — question has NO library match; it forces LLM generation.
+#   Test executes the LLM-generated SQL and an expected reference SQL against
+#   the live demo database and compares result sets (shape + sorted values).
+#
+# New questions should pull from real operator/shift-lead vocabulary, not
+# phrased in ways that leak the expected SQL. See failure_modes.md for
+# categories the judge flags — new failure modes get new entries there.
+
+samples:
+
+  # ------------------------------------------------------------------
+  # LIBRARY PATH — one question per representative library pattern.
+  # Goal: catch silent regressions when someone edits query_library.py.
+  # ------------------------------------------------------------------
+
+  - id: q01
+    question: what did we produce today
+    path: library
+    expected_pattern_description: Today's production summary by product
+    expected_columns: [product, runs, input_kg, output_kg, waste_kg, avg_yield_pct, waste_cost_gbp]
+
+  - id: q02
+    question: which products have the most waste this week
+    path: library
+    expected_pattern_description: Top products by waste this week
+    expected_columns: [product, total_waste_kg, waste_cost_gbp, avg_yield_pct, production_runs]
+
+  - id: q03
+    question: show me pending orders
+    path: library
+    expected_pattern_description: All pending orders by customer
+    expected_columns: [customer, product, total_kg, num_orders, earliest_delivery]
+
+  - id: q04
+    question: any temperature excursions this week
+    path: library
+    expected_pattern_description: Temperature excursions in the last 7 days
+    expected_columns: [location, temperature, recorded_at, recorded_by]
+
+  - id: q05
+    question: average yield by product
+    path: library
+    expected_pattern_description: Average yield by product (last 30 days)
+    expected_columns: [product, avg_yield_pct, min_yield, max_yield, runs, waste_cost_gbp]
+
+  - id: q06
+    question: who has worked overtime this week
+    path: library
+    expected_pattern_description: Staff overtime status
+    expected_columns: [name, role, shift_pattern, hours_this_week, hourly_rate, status]
+
+  - id: q07
+    question: what raw materials are expiring soon
+    path: library
+    expected_pattern_description: Raw materials expiring within 3 days
+    expected_columns: [batch_code, product, quantity_kg, expiry_date, supplier, days_left]
+
+  - id: q08
+    question: how much money did we lose to waste this week
+    path: library
+    expected_pattern_description: Total waste cost breakdown
+    expected_columns: [week_cost_gbp, month_cost_gbp, total_cost_gbp, week_waste_kg, month_waste_kg]
+
+  - id: q09
+    question: which customer ordered the most this month
+    path: library
+    expected_pattern_description: Customer orders breakdown (last 30 days)
+    expected_columns: [customer, total_orders, total_kg, revenue_gbp]
+
+  - id: q10
+    question: which suppliers delivered in the last 30 days
+    path: library
+    expected_pattern_description: Supplier deliveries (last 30 days)
+    expected_columns: [supplier, deliveries, total_kg, avg_temp_on_arrival]
+
+  - id: q11
+    # Phrasing deliberately avoids "product" because pattern 5
+    # (`(yield|yields).*(product|...)`) is earlier in the library list and
+    # greedily matches anything containing "production" via the "product"
+    # alternative. See failure_modes.md > library/wrong-pattern.
+    question: yield per line last week
+    path: library
+    expected_pattern_description: Yield by production line (last 7 days)
+    expected_columns:
+      [production_date, line_name, line_type, runs, target_kg, actual_kg, waste_kg, avg_yield_pct]
+
+  - id: q12
+    question: trace batch BC-0001
+    path: library
+    # Matches the exact string in query_library.py (colon, no em-dash).
+    expected_pattern_description: "Traceability chain: run to catch vessel"
+    expected_columns:
+      [run_number, production_date, product, customer, batch_code, supplier, species,
+       catch_area, catch_method, vessel_name, landing_date, country_origin, certified]
+
+  - id: q13
+    question: shift productivity day vs night
+    path: library
+    expected_pattern_description: Shift productivity comparison (last 14 days)
+    expected_columns:
+      [shift_code, total_shifts, avg_headcount, avg_output_kg, avg_kg_per_head, avg_overtime_hrs]
+
+  - id: q14
+    question: any open critical non-conformances
+    path: library
+    expected_pattern_description: Open non-conformances by severity
+    expected_columns: [nc_id, nc_date, nc_type, severity, description, raised_by, status, product]
+
+  # ------------------------------------------------------------------
+  # LLM PATH — no library match, real NL-to-SQL accuracy measurement.
+  # These are where the "~60%" README claim actually gets tested.
+  # ------------------------------------------------------------------
+
+  - id: q15
+    question: how many products have salmon in their name
+    path: llm
+    expected_sql: |
+      SELECT COUNT(*) AS salmon_product_count
+      FROM products
+      WHERE LOWER(name) LIKE '%salmon%'
+    # Single scalar — judge compares the numeric value.
+
+  - id: q16
+    question: which operator ran the most production batches in the last 30 days
+    path: llm
+    expected_sql: |
+      SELECT operator, COUNT(*) AS batches
+      FROM production
+      WHERE date >= date('now', '-30 days')
+      GROUP BY operator
+      ORDER BY batches DESC
+      LIMIT 1
+    # Single-row ranking — judge compares the top operator.
+
+  - id: q17
+    question: which product has the highest profit margin per kg
+    path: llm
+    expected_sql: |
+      SELECT name, (sell_price_per_kg - unit_cost_per_kg) AS margin_per_kg
+      FROM products
+      WHERE sell_price_per_kg IS NOT NULL AND unit_cost_per_kg IS NOT NULL
+      ORDER BY margin_per_kg DESC
+      LIMIT 1
+    # Single-row — judge compares product name + margin (within tolerance).
+
+  - id: q18
+    question: list orders that were delivered late in the last 30 days
+    path: llm
+    expected_sql: |
+      SELECT customer, product_id, delivery_date, status
+      FROM orders
+      WHERE delivery_date < date('now')
+        AND delivery_date >= date('now', '-30 days')
+        AND status != 'shipped'
+    # Multi-row set comparison — judge sorts both sides and compares rows.
+
+  - id: q19
+    question: how many production batches had waste above 20 kilograms last week
+    path: llm
+    expected_sql: |
+      SELECT COUNT(*) AS high_waste_batches
+      FROM production
+      WHERE date >= date('now', '-7 days')
+        AND waste_kg > 20
+    # Scalar — exact match.
+
+  - id: q20
+    question: average temperature by location in the last 7 days
+    path: llm
+    expected_sql: |
+      SELECT location, ROUND(AVG(temperature), 2) AS avg_temp
+      FROM temp_logs
+      WHERE recorded_at >= date('now', '-7 days')
+      GROUP BY location
+      ORDER BY location
+    # Multi-row — judge compares location set and per-location averages (±0.5°C).

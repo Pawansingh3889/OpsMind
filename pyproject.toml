@@ -14,3 +14,11 @@ python_version = "3.11"
 warn_return_any = true
 warn_unused_configs = true
 ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+# Custom markers for the eval harness (tests/eval/).
+# Library path runs in CI; LLM path is opt-in locally.
+markers = [
+    "eval_library: library fast-path eval — no Ollama required",
+    "eval_llm: LLM-path eval — requires Ollama with gemma3:12b on localhost",
+]
