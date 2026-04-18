@@ -457,10 +457,31 @@ Errors in the SQL agent pipeline are automatically reported when Sentry is enabl
 
 | Area | Reality |
 |---|---|
-| LLM accuracy | ~60% on novel complex queries. Pre-built library handles top 10 questions reliably. |
+| LLM accuracy | Measured per release — see `tests/eval/golden_set.yaml` (library path + LLM path). Run `make eval` locally to get current numbers for your model + schema. |
 | Speed | 10-25 sec per query on 16GB RAM. LLM is the bottleneck. |
 | Auth | Password via Streamlit secrets. No multi-user roles. |
 | Safety | Read-only. SELECT only — INSERT/UPDATE/DELETE blocked. |
+
+### Evaluation
+
+The accuracy claim is backed by a golden set (`tests/eval/golden_set.yaml`) with
+two paths:
+
+- **Library path** — 14 questions that should hit pre-built SQL patterns. Runs
+  with no LLM, catches regressions when someone edits `query_library.py`.
+- **LLM path** — 6 questions the library can't match, forcing real NL-to-SQL
+  generation. Generated SQL is executed against the demo database and compared
+  to a reference SQL's result set.
+
+```bash
+make eval-library   # fast, CI-safe, no Ollama needed
+make eval-llm       # requires Ollama + gemma3:12b
+make eval           # both
+```
+
+Failure modes are catalogued in `tests/eval/failure_modes.md` — the taxonomy
+grows as real failures arrive (pattern from Martin Seeler's "AI Evals Done
+Right", PyCon DE 2026).
 
 ---
 
