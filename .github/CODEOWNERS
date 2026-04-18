@@ -1,0 +1,12 @@
+# CODEOWNERS for OpsMind
+#
+# GitHub auto-requests review from the listed owner(s) whenever a PR
+# touches a matching path. Triggered regardless of whether the PR author
+# @-mentions anyone — stops review requests from getting lost.
+#
+# Today OpsMind is solo-maintained, so every path routes to the
+# maintainer. When a triage collaborator is granted (see GOVERNANCE.md §
+# Triage collaborator), add them under the scoped path they own so the
+# maintainer isn't a single point of latency on routine reviews.
+
+* @Pawansingh3889
