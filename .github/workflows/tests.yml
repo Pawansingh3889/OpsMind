@@ -45,7 +45,9 @@ jobs:
         run: python scripts/seed_demo_db.py
 
       - name: Run tests
-        run: python -m pytest tests/test_core.py -v --tb=short
+        # Runs legacy cross-module suite plus any focused per-module tests
+        # that have been split out under tests/unit/. Eval is a separate step.
+        run: python -m pytest tests/test_core.py tests/unit/ -v --tb=short
 
       - name: Run eval (library path only — no Ollama required)
         env:
