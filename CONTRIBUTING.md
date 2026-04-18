@@ -11,9 +11,10 @@ OpsMind is an open-source AI query tool for manufacturing operations. It runs 10
 ```bash
 git clone https://github.com/YOUR_USERNAME/OpsMind.git
 cd OpsMind
-make setup    # Install deps + seed demo database
-make test     # Run 36 pytest tests
-make run      # Start Streamlit app
+make setup          # Install deps + seed demo database
+make test           # Run the pytest suite
+make eval-library   # Run the fast eval (no Ollama needed)
+make run            # Start Streamlit app
 ```
 
 ## How to Contribute
@@ -22,8 +23,11 @@ make run      # Start Streamlit app
 2. **Claim it.** Comment on the issue saying you are picking it up so we don't duplicate work.
 3. **Branch.** Fork the repo and create a branch (`feature/your-feature-name` or `bugfix/issue-description`).
 4. **Code.** Keep Python clean. Follow existing patterns. Comment non-obvious logic.
-5. **Test.** Add tests in `tests/test_core.py`. Run `make test` before submitting.
+5. **Test.** Add focused tests under `tests/unit/` (one file per module; see the
+   existing files). Cross-module smoke tests continue to live in
+   `tests/test_core.py`. Run `make test` before submitting.
 6. **Pull request.** Explain *what* you changed and *why*. Reference the issue number.
+   One logical change per commit makes review easier.
 
 ## Current Focus Areas
 
@@ -73,6 +77,61 @@ OpsMind/
 │   └── benchmark_models.py   # Model comparison script
 └── docs/                     # Landing page (GitHub Pages)
 ```
+
+## How to add a question to the eval golden set
+
+OpsMind's accuracy claim is backed by `tests/eval/golden_set.yaml`. When you
+add a new library pattern or want to raise confidence on the LLM path, extend
+the golden set. The workflow:
+
+1. **Decide the path.**
+   - `library` — your question should match a pre-built regex pattern in
+     `modules/query_library.py`. Good for catching silent regressions when
+     someone tweaks a pattern.
+   - `llm` — your question has **no** library match and forces real NL-to-SQL
+     generation. This is where the LLM accuracy number lives.
+
+2. **Add a sample to `tests/eval/golden_set.yaml`.**
+
+   Library sample — no hand-written SQL needed, the judge reads the library:
+   ```yaml
+   - id: q21
+     question: which line had the lowest yield yesterday
+     path: library
+     expected_pattern_description: Yield by production line (last 7 days)
+     expected_columns: [production_date, line_name, ...]
+   ```
+
+   LLM sample — include reference SQL the judge will execute against the
+   demo database. Result sets are compared, not SQL text, so your SQL need
+   only agree with the LLM's *in output*:
+   ```yaml
+   - id: q22
+     question: how many temperature breaches happened last month
+     path: llm
+     expected_sql: |
+       SELECT COUNT(*) AS breaches
+       FROM temp_logs
+       WHERE recorded_at >= date('now', '-30 days')
+         AND temperature > 5
+   ```
+
+3. **Run it.**
+   ```bash
+   make eval-library          # fast path
+   make eval-llm              # requires Ollama + gemma3:12b
+   ```
+
+4. **When the LLM fails, log the failure mode.**
+   Append one line to `tests/eval/failure_modes.md` under the matching
+   heading (`llm/sql-error`, `llm/value-mismatch`, etc.). Don't rewrite
+   history — fixes close entries, they don't delete them. This is the
+   Seeler "cluster failures before tuning prompts" pattern: the taxonomy is
+   what drives prompt changes, not a single hot datapoint.
+
+5. **If your fix touches a prompt or the query library,** rerun the full
+   eval and update the "fixed:" marker on the failure-mode entry with the
+   commit SHA.
 
 ## Code Standards
 
