@@ -1,0 +1,42 @@
+name: Validate PR title
+
+# Enforces conventional-commit prefixes on the PR title so squash-merge
+# commit messages read clean in the main log. Camila Maia pattern
+# (PyCon DE 2026): the *bot* nags contributors to fix their title; the
+# maintainer stays out of the back-and-forth.
+
+on:
+  pull_request_target:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check conventional commit prefix
+        uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # Accepted prefixes — matches the existing git history.
+          types: |
+            feat
+            fix
+            docs
+            chore
+            ci
+            test
+            style
+            refactor
+            perf
+            build
+          # Require a non-empty subject after the prefix.
+          requireScope: false
+          subjectPattern: ^(?![A-Z]).+$
+          subjectPatternError: |
+            The PR title subject should start lowercase. E.g. "fix: handle
+            empty response" rather than "fix: Handle empty response".
+          validateSingleCommit: false
