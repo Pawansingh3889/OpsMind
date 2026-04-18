@@ -71,6 +71,16 @@ Discussion happens in the issue until the maintainer gives an explicit
 "proceed to PR". This avoids the "big PR arrives, maintainer says no,
 everyone loses a weekend" failure mode.
 
+### Architecture Decision Records (ADRs)
+
+Proposals that change how OpsMind is *built* (not just what it does) are
+labelled **`ADR`** on the issue so they're easy to find later. Pattern
+borrowed from Camila Maia's ScanAPI talk (PyCon DE 2026). After
+discussion lands on a decision, a follow-up issue with the task
+breakdown is opened and referenced back to the ADR. Historical ADRs
+stay open in an archived state as the record of "why we did it this
+way" — closing the issue loses that context.
+
 ## Issue assignment (first-PR-wins)
 
 OpsMind uses a **first-PR-wins soft-assignment policy**, borrowed from

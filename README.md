@@ -507,6 +507,10 @@ Good first issues are labelled `good first issue`. First-PR-wins on any
 issue: claim by commenting, ship within 7 days, or the next contributor
 may take it.
 
+**If OpsMind is useful to you, a GitHub star is the easiest way to help
+— it makes the project more discoverable for people with the same
+problem.**
+
 ---
 
 **[Docs](https://pawansingh3889.github.io/OpsMind/)** &#183; **[Report Bug](https://github.com/Pawansingh3889/OpsMind/issues)** &#183; **[Request Feature](https://github.com/Pawansingh3889/OpsMind/issues)** &#183; **[Security](SECURITY.md)**
