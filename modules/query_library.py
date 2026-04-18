@@ -309,8 +309,11 @@ QUERY_LIBRARY = [
     {
         "patterns": [
             r"giveaway",
-            r"overweight.*(product|analysis)",
-            r"(product|plu).*waste",
+            # Word-bounded "product" so we don't greedy-match "production" —
+            # same class of fix as pattern 5. Caught by tests/unit/
+            # test_query_library.py when expanding regression coverage.
+            r"overweight.*\b(product|analysis)\b",
+            r"\b(product|plu)\b.*waste",
         ],
         "sql": lambda: f"""
             SELECT pp.description, pp.customer, pp.pack_size_g,
