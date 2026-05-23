@@ -181,3 +181,41 @@ methodology. It demonstrates:
 
 That moves the AKT 6 conversation from "we'll figure out how to validate
 this" to "we already validate; the project extends a working framework."
+
+---
+
+## Roadmap — follow-on direction beyond AKT 6
+
+The AKT 6 scope is multi-plant validation of OpsMind's existing
+functionality. The platform's roadmap beyond the AKT 6 window has three
+near-term directions, each with a clear v0 foundation in the current
+codebase:
+
+**v1.0 — push-driven alerting.** Move the operator UX from "ask the
+database" to "be told." The existing `modules/alerts.py` and
+`modules/waste_predictor.py` provide the alerting surface; v1.0 adds
+policy-driven push to Teams / email / on-prem webhook so non-conformance
+signals surface without an operator asking. Estimated effort: 2-3 weeks
+of engineering once the multi-plant deployment pattern is validated.
+Commercial precedents include SGS Digicomply's AI Copilot and the Pro AI
+custom NLP agents for production scheduling.
+
+**v1.1 — RCA scaffolding.** When the platform surfaces an anomaly (yield
+drop, weight variance, temperature excursion), it proposes the next
+5 Whys questions and surfaces the historical batch data the QA team
+needs to answer them — explicitly leaving the conclusion to the named
+human owner. The framing is deliberate: in BRC-audited operations,
+automated root-cause inference is a regulatory liability (the auditor
+will ask "did you verify the AI's conclusion?"), but RCA scaffolding is
+a productivity gain without the audit risk.
+
+**v1.2 — model-driven predictive alerting.** Train per-plant forecasting
+models (line yield, chiller drift, weight variance) so excursions are
+predicted before they breach (for example, "Line 3 chiller drift
+trajectory suggests excursion in 45 minutes"). Requires a real per-plant
+training dataset, which the AKT 6 multi-plant deployment will generate
+naturally — making the AKT 6 work a prerequisite for the v1.2
+deliverable, not a substitute for it.
+
+The AKT 6 project is not these features. It is the validation framework
+that makes them buildable on solid ground.
