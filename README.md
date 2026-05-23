@@ -22,6 +22,17 @@
 
 ---
 
+## Companion tools
+
+OpsMind is part of a small set of on-prem tools for regulated manufacturing data. The three work cleanly on their own but compose into a platform:
+
+- **[sql-sop](https://github.com/Pawansingh3889/sql-guard)** — Static SQL safety layer. OpsMind generates SQL via the LLM; sql-sop validates that SQL against 44 rules before execution. Read-only enforcement plus static pattern checks, defence in depth.
+- **[Manufacturing Compliance Dashboard](https://github.com/Pawansingh3889/manufacturing-compliance-dashboard)** — Live BRC/HACCP dashboard for the same manufacturing data OpsMind queries. The audit-trail surface for the platform; OpsMind is the operator-facing query layer.
+
+See [`docs/multi-plant-deployment.md`](docs/multi-plant-deployment.md) for the runbook to deploy OpsMind at a second plant — the in-flight Innovate UK AKT 6 scope.
+
+---
+
 ## What Problem Does This Solve?
 
 Factory managers and shift leads need answers from production data — yield, waste, compliance, traceability. Today, they either write SQL themselves (error-prone), wait for IT (slow), or export to Excel (outdated by the time it opens). OpsMind lets anyone type a question in plain English and get an answer in 5 seconds, directly from the production database.
