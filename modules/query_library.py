@@ -78,25 +78,6 @@ QUERY_LIBRARY = [
     },
     {
         "patterns": [
-            r"temperature.*(excursion|issue|problem|breach)",
-            r"(cold room|freezer).*(temperature|temp)",
-            r"any.*temp.*(excursion|issue|today|this week)",
-        ],
-        "sql": lambda: f"""
-            SELECT location, temperature, recorded_at, recorded_by
-            FROM temp_logs
-            WHERE recorded_at >= {days_ago(7)}
-            AND (
-                (location LIKE '%Cold Room%' AND temperature > 5)
-                OR (location LIKE '%Freezer%' AND temperature > -15)
-                OR (location LIKE '%Dispatch%' AND temperature > 8)
-            )
-            ORDER BY recorded_at DESC
-        """,
-        "description": "Temperature excursions in the last 7 days",
-    },
-    {
-        "patterns": [
             # Word-bounded "product" so we don't greedily match "production"
             # and steal questions meant for the per-line yield pattern
             # further down. Caught by tests/eval/ (library/wrong-pattern).
@@ -250,24 +231,6 @@ QUERY_LIBRARY = [
             LIMIT 20
         """,
         "description": "Traceability chain: run to catch vessel",
-    },
-    {
-        "patterns": [
-            r"(temp|temperature).*(breach|excursion|out of range|alert)",
-            r"(chiller|freezer).*(breach|alert|problem)",
-            r"breach.*(temp|temperature)",
-        ],
-        "sql": lambda: f"""
-            SELECT tl.reading_time, tl.location,
-                   tl.temp_celsius, tl.target_max,
-                   ROUND(tl.temp_celsius - tl.target_max, 1) as degrees_over,
-                   tl.recorded_by
-            FROM prod_temperature_logs tl
-            WHERE tl.in_range = 0
-              AND tl.reading_time >= {days_ago(7)}
-            ORDER BY tl.reading_time DESC
-        """,
-        "description": "Temperature breaches (last 7 days)",
     },
     {
         "patterns": [
