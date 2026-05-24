@@ -110,8 +110,9 @@ Open `schema.yaml`. The file ships with the demo SQLite mapping and an
 example SQL Server (SI Integreater) mapping commented out. For plant 2:
 
 1. Identify the equivalent tables in the plant's ERP for each business
-   domain (`traceability`, `production`, `orders`, `temperature`, `staff`,
-   `stock`, `compliance`).
+   domain (`traceability`, `production`, `orders`, `staff`, `stock`,
+   `compliance`). Real-time temperature monitoring is deliberately not
+   a query domain — see the README scope note.
 2. For each domain, list the tables OpsMind should consider, with their
    relevant columns.
 3. Use **only columns the LLM needs to see** — fewer columns means tighter

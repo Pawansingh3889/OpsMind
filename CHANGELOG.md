@@ -7,6 +7,36 @@ OpsMind is deployed, not released — so entries accumulate under
 `[Unreleased]` and only gain a version + date when a tagged release is
 cut (none today; see `GOVERNANCE.md` § Release cadence for the rule).
 
+## [0.3.1] - 2026-05-24
+
+### Removed
+
+- **Standalone `temperature` domain in the NL query surface.** Temperature
+  monitoring in BRC-audited operations is a formal closed loop (calibrated
+  probes -> SCADA -> automated log -> QA sign-off). Routing temperature
+  questions through an LLM let operators get a soft "no excursions"
+  answer without consulting the formal monitoring system, breaking the
+  audit trail. Removed:
+  - the `temperature` entry from `DEFAULT_SCHEMA` in
+    `modules/schema_registry.py`
+  - the `temperature` keyword block from `DOMAIN_KEYWORDS`
+  - two library patterns from `modules/query_library.py` (temperature
+    excursions and breach queries)
+  - golden-set tests `q04` (temperature excursions) and `q20` (average
+    temperature by location)
+  - the temperature example block from `schema.yaml` (replaced with a
+    rationale comment)
+  - the corresponding unit test in `tests/unit/test_schema_registry.py`
+
+  **Kept:** `prod_temperature_logs` and `temp_logs` as tables inside the
+  `compliance` domain for batch-traceability lookups (e.g. "what was the
+  intake temperature on Batch X?"). Push alerts in `modules/alerts.py`
+  remain — those are explicit, traceable, and named-recipient.
+
+### Changed
+
+- `test_schema_registry.py` now covers 6 domains (was 7).
+
 ## [Unreleased]
 
 ### Added
@@ -20,7 +50,7 @@ cut (none today; see `GOVERNANCE.md` § Release cadence for the rule).
 - **Per-module unit tests** under `tests/unit/` — `test_sql_validator.py`
   (28 tests + 1 documented xfail covering all 5 pipeline stages),
   `test_query_library.py` (regex-collision guards + happy paths),
-  `test_schema_registry.py` (all 7 domains + edges).
+  `test_schema_registry.py` (all 6 domains + edges).
 - **Governance paperwork** — `GOVERNANCE.md`, `SECURITY.md`,
   `CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`, `THIRD_PARTY_NOTICES.md`,
   plus `NOTICE` per Apache 2.0 § 4(d). Full contributor contract now

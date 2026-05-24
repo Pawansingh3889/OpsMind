@@ -33,10 +33,12 @@
 #     Customers: CustomerCode, CustomerName
 #     Products: ProductCode, ProductName
 #
-# temperature:
-#   description: Temperature monitoring
-#   tables:
-#     TemperatureLogs: LogID, LocationName, Temperature, RecordedAt, RecordedBy
+# Note: temperature monitoring is intentionally not an OpsMind query domain.
+# In BRC-audited operations, temperature monitoring is a formal closed loop
+# (calibrated probes -> SCADA -> automated log -> QA sign-off). Routing
+# temperature questions through an LLM would let operators bypass the audit
+# trail. Use the compliance dashboard for temperature; OpsMind for batch
+# traceability that happens to include temp_on_arrival columns.
 #
 # staff:
 #   description: Staff and overtime

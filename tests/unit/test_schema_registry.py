@@ -42,7 +42,6 @@ _HAS_STREAMLIT = importlib.util.find_spec("streamlit") is not None
         ("trace batch BC-0001 back to the vessel",                "traceability"),
         ("what was our yield this week",                          "production"),
         ("any pending orders for Customer A",                     "orders"),
-        ("cold room temperature last night",                      "temperature"),
         ("who worked overtime this week",                         "staff"),
         ("what raw materials are running low",                    "stock"),
         ("allergen changeover check on line 2",                   "compliance"),
@@ -69,12 +68,12 @@ class TestDetectDomainEdges:
         assert schema_registry.detect_domain("Trace Batch BC-0001") == "traceability"
 
     def test_more_keywords_wins(self) -> None:
-        """A question mixing traceability + temperature keywords where
-        temperature wins by keyword count, not declaration order."""
-        # "temperature" + "cold room" + "breach" + "degrees" = 4 hits for
-        # temperature; "batch" = 1 hit for traceability.
-        q = "cold room temperature breach degrees above target on batch BC-0001"
-        assert schema_registry.detect_domain(q) == "temperature"
+        """A question mixing traceability + production keywords where
+        production wins by keyword count, not declaration order."""
+        # production: "yield" + "production" + "line" + "shift" + "waste" = 5 hits.
+        # traceability: "batch" = 1 hit.
+        q = "yield on production line, last shift's waste on batch BC-0001"
+        assert schema_registry.detect_domain(q) == "production"
 
     def test_single_domain_keyword_wins_against_zero(self) -> None:
         assert schema_registry.detect_domain("just an order please") == "orders"
@@ -93,7 +92,7 @@ class TestGetTablesForDomain:
     def test_every_documented_domain_has_tables(self) -> None:
         for domain in (
             "production", "orders", "compliance", "traceability",
-            "temperature", "staff", "stock",
+            "staff", "stock",
         ):
             tables = schema_registry.get_tables_for_domain(domain)
             assert tables, f"domain {domain!r} returned no tables"
@@ -140,9 +139,11 @@ class TestGetPromptForQuestion:
         assert "production" in prompt
         assert "products" in prompt
 
-    def test_temperature_question_emits_temp_logs_table(self) -> None:
-        prompt = schema_registry.get_prompt_for_question("cold room temperature last night")
-        assert "temp_logs" in prompt or "prod_temperature_logs" in prompt
+    # test_temperature_question_emits_temp_logs_table removed in v0.3.1 —
+    # temperature is no longer a query domain. See README scope note and
+    # CHANGELOG for rationale. Compliance-domain temp tables still exist for
+    # batch-traceability lookups (e.g. "what was the intake temp on Batch X?")
+    # but they are not routed via temperature keywords.
 
 
 if __name__ == "__main__":
