@@ -81,7 +81,6 @@ falls here. Examples from the current golden set:
 - `q01` what did we produce today
 - `q02` which products have the most waste this week
 - `q03` show me pending orders
-- `q04` any temperature excursions this week
 - `q06` who has worked overtime this week
 - `q07` what raw materials are expiring soon
 - `q08` how much money did we lose to waste this week
@@ -201,7 +200,7 @@ Commercial precedents include SGS Digicomply's AI Copilot and the Pro AI
 custom NLP agents for production scheduling.
 
 **v1.1 — RCA scaffolding.** When the platform surfaces an anomaly (yield
-drop, weight variance, temperature excursion), it proposes the next
+drop, weight variance, hook-triggered NC, allergen-changeover gap), it proposes the next
 5 Whys questions and surfaces the historical batch data the QA team
 needs to answer them — explicitly leaving the conclusion to the named
 human owner. The framing is deliberate: in BRC-audited operations,
