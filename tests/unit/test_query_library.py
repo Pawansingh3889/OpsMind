@@ -44,7 +44,6 @@ def _match(question: str) -> tuple[str | None, str | None]:
         ("what did we produce today",                   "Today's production summary by product"),
         ("which products have the most waste this week","Top products by waste this week"),
         ("show me pending orders",                      "All pending orders by customer"),
-        ("any temperature excursions this week",        "Temperature excursions in the last 7 days"),
         ("average yield by product",                    "Average yield by product (last 30 days)"),
         ("who has worked overtime this week",           "Staff overtime status"),
         ("what raw materials are expiring soon",        "Raw materials expiring within 3 days"),
@@ -92,12 +91,9 @@ class TestPatternCollisions:
         sql, desc = find_matching_query("which products have the most waste")
         assert desc == "Top products by waste this week"
 
-    # Intentionally NOT asserted: patterns 4 and 13 both legitimately cover
-    # temperature questions — pattern 4 against the legacy ``temp_logs``
-    # table, pattern 13 against the production ERP ``prod_temperature_logs``.
-    # Which one "should" win for a bare "temperature breach" question is an
-    # owner-level design decision, not a test-level assertion. If the owner
-    # settles this, add the assertion back and pick a canonical question.
+    # Temperature patterns previously here (patterns 4 and 13) were removed
+    # in v0.3.1 — temperature is no longer routed through the NL surface.
+    # See CHANGELOG and README scope note.
 
 
 # ---------------------------------------------------------------------------
@@ -114,7 +110,6 @@ class TestPatternCollisions:
         "which product has the highest profit margin per kg",
         "list orders that were delivered late in the last 30 days",
         "how many production batches had waste above 20 kilograms last week",
-        "average temperature by location in the last 7 days",
     ],
 )
 def test_llm_path_questions_do_not_match_library(question: str) -> None:
