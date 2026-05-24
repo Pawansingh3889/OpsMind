@@ -32,7 +32,7 @@ VECTOR_PG_URL = os.getenv("OPSMIND_VECTOR_PG_URL", "")
 # App
 APP_NAME = "OpsMind"
 APP_TAGLINE = "The AI Brain for Your Operations"
-VERSION = "0.3.0"
+VERSION = "0.3.1"
 
 # Schema
 SCHEMA_CONFIG = os.getenv("SCHEMA_CONFIG", "schema.yaml")
