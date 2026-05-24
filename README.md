@@ -46,6 +46,16 @@ Factory managers and shift leads need answers from production data — yield, wa
 - **Smart alerts** — flags yield drops, temperature breaches, and overtime automatically
 - **Domain-aware** — loads compliance, production, and waste rules at runtime for context-aware answers
 
+> **Scope: OpsMind does not answer natural-language queries about real-time
+> temperature data.** Temperature monitoring in BRC-audited operations is a
+> formal closed loop (calibrated probes → SCADA → automated log → QA
+> sign-off). Routing temperature questions through an LLM would let
+> operators get a soft "no excursions" answer without consulting the
+> formal monitoring system, breaking the audit trail. Temperature breach
+> *push alerts* (`modules/alerts.py`) stay — those are explicit,
+> traceable, and tied to named recipients. The compliance dashboard
+> remains the authoritative real-time temperature surface.
+
 ---
 
 Manufacturing teams query data through Excel exports and IT requests. OpsMind lets any operator ask the database in English — offline, on-prem, no API keys.
@@ -105,7 +115,7 @@ User asks: "What was yesterday's waste?"
 ┌─────────────┐     ┌──────────────────┐     ┌──────────────┐
 │ Schema       │────▶│ Pick 4 tables    │────▶│ Ollama LLM   │
 │ Registry     │     │ from 19          │     │ (Gemma3 12B)  │
-│ (7 domains)  │     │ (domain match)   │     │              │
+│ (6 domains)  │     │ (domain match)   │     │              │
 └─────────────┘     └──────────────────┘     └──────────────┘
                                                     │
                                                     ▼
@@ -168,7 +178,7 @@ User asks: "What was yesterday's waste?"
 │  → Salmon fillets: 42kg waste (8.1% of output)             │
 │                                                             │
 │  TAB 7: Schema Registry                                     │
-│  7 domains │ up to 147 tables │ 4 selected for current query     │
+│  6 domains │ up to 147 tables │ 4 selected for current query     │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -259,7 +269,7 @@ Coverage at a glance:
 | Smoke | `tests/test_core.py` | Config, SQL dialect, schema registry, database, compliance, alerts, waste, SQL safety, doc search — one test per concern. |
 | Per-module | `tests/unit/test_sql_validator.py` | Every stage of the 5-stage SQL validation pipeline (statement type, injection, table existence, column resolution, row-limit injection). |
 | Per-module | `tests/unit/test_query_library.py` | One canonical question per library pattern + explicit regex-collision guards. |
-| Per-module | `tests/unit/test_schema_registry.py` | Domain detection for all 7 domains, edge cases, registry contracts. |
+| Per-module | `tests/unit/test_schema_registry.py` | Domain detection for all 6 domains, edge cases, registry contracts. |
 | Eval | `tests/eval/golden_set.yaml` | 20 factory questions — 14 library-path, 6 LLM-path. Judge compares result sets against the demo database. |
 
 Failure-mode taxonomy for the eval harness lives in
@@ -278,7 +288,7 @@ OPSMIND_DB=mssql+pyodbc://user:pass@server/database?driver=ODBC+Driver+17+for+SQ
 OPSMIND_DB=mssql+pyodbc://server/database?driver=ODBC+Driver+17+for+SQL+Server&trusted_connection=yes
 ```
 
-Then edit `schema.yaml` to map your tables to OpsMind's 7 business domains:
+Then edit `schema.yaml` to map your tables to OpsMind's 6 business domains:
 
 ```yaml
 traceability:
@@ -290,12 +300,12 @@ production:
   tables:
     ProductionRuns: RunID, ProductCode, FinishedOutputKg, WasteKg
 
-# Also: orders, temperature, staff, stock, compliance
+# Also: orders, staff, stock, compliance
 ```
 
-> **Production ERP integration:** Includes 19 production ERP tables (runs, traceability, temperature, non-conformance, shifts, despatch, shelf life, yield tiers) with 8 pre-built SQL queries and 3 production-specific alerts.
+> **Production ERP integration:** Includes 19 production ERP tables (runs, traceability, non-conformance, shifts, despatch, shelf life, yield tiers, plus `prod_temperature_logs` referenced from the compliance domain for batch traceability) with 6 pre-built SQL queries and 3 production-specific push alerts. Temperature data is not queryable through the NL surface — see the scope note above.
 
-> Production data follows a batch-centric run structure: one batch feeds one run producing multiple products across RSPCA (Tier 1), GG (Tier 2), and catch-all (Tier 3) tiers. The schema registry maps these tables to 7 business domains for efficient NL-to-SQL query generation.
+> Production data follows a batch-centric run structure: one batch feeds one run producing multiple products across RSPCA (Tier 1), GG (Tier 2), and catch-all (Tier 3) tiers. The schema registry maps these tables to 6 business domains for efficient NL-to-SQL query generation.
 
 ## Production Queries
 
@@ -381,7 +391,7 @@ User Question (plain English)
     |
     +---> [Query Library] --- 8 pre-built queries (fast path)
     |
-    +---> [Schema Registry] --- 7 domains, 19 tables
+    +---> [Schema Registry] --- 6 domains, 19 tables
     |
     +---> [Ollama / Gemma 3 12B] --- NL-to-SQL generation
     |
@@ -439,7 +449,7 @@ question -> [detect_domain] -> [check_library] --match--> [validate_sql] -> [exe
 
 | Node | Purpose |
 |---|---|
-| `detect_domain` | Maps the question to one of 7 business domains via keyword scoring |
+| `detect_domain` | Maps the question to one of 6 business domains via keyword scoring |
 | `check_library` | Checks 18 pre-built regex patterns for a fast-path match (no LLM needed) |
 | `generate_sql` | LLM generates SQL from the question and domain-scoped schema |
 | `validate_sql` | Safety gate -- only SELECT/WITH allowed, blocks dangerous keywords |
