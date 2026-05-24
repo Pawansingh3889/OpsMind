@@ -39,12 +39,6 @@ DEFAULT_SCHEMA = {
             "orders": "id, customer, product_id, quantity_kg, order_date, delivery_date, status, price_per_kg",
         },
     },
-    "temperature": {
-        "description": "Temperature monitoring and excursions",
-        "tables": {
-            "temp_logs": "id, location, temperature, recorded_at, recorded_by",
-        },
-    },
     "staff": {
         "description": "Staff hours, shifts, and overtime",
         "tables": {
@@ -66,7 +60,7 @@ DEFAULT_SCHEMA = {
             "production": "id, product_id, batch_code, date",
             "prod_products": "product_code, description, species, customer, allergens, hazard_class",
             "prod_traceability": "trace_id, batch_code, supplier, species, catch_area, vessel_name, certified, country_origin",
-            "prod_temperature_logs": "log_id, location, reading_time, temp_celsius, target_min, target_max, in_range",
+            "prod_temperature_logs": "log_id, location, reading_time, temp_celsius, target_min, target_max, in_range, recorded_by",
             "prod_non_conformance": "nc_id, nc_date, run_number, product_code, nc_type, severity, description, root_cause, corrective_action, status",
             "prod_case_verification": "verify_id, run_number, expected_plu, scanned_plu, match, scan_time",
         },
@@ -91,9 +85,6 @@ DEFAULT_SCHEMA["orders"]["tables"].update({
     "prod_despatch": "despatch_id, order_number, customer, product_code, qty_cases, qty_kg, despatch_date, delivery_date, vehicle_temp_c, status",
     "prod_products": "product_code, description, species, customer",
 })
-DEFAULT_SCHEMA["temperature"]["tables"].update({
-    "prod_temperature_logs": "log_id, location, reading_time, temp_celsius, target_min, target_max, in_range, recorded_by",
-})
 DEFAULT_SCHEMA["staff"]["tables"].update({
     "prod_shifts": "shift_id, shift_date, shift_code, line_id, headcount, planned_hours, actual_hours, overtime_hours, output_kg, kg_per_head",
 })
@@ -110,8 +101,6 @@ DOMAIN_KEYWORDS = {
                    "PLU", "product code", "run total", "downtime", "reject", "target weight", "net weight", "capacity"],
     "orders": ["order", "customer", "delivery", "pending", "lidl", "iceland", "tesco", "aldi", "morrisons",
                "despatch", "dispatch", "vehicle temp", "loaded", "cases"],
-    "temperature": ["temperature", "temp", "cold room", "freezer", "excursion", "degrees",
-                    "chiller", "blast freezer", "goods in", "breach", "CCP", "target temp", "in range"],
     "staff": ["staff", "overtime", "hours", "shift", "worker", "employee", "radu", "marek",
               "headcount", "kg per head", "productivity", "planned hours", "actual hours", "day shift", "night shift"],
     "stock": ["stock", "expir", "raw material", "inventory", "available", "shortage",
