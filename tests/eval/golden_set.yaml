@@ -39,11 +39,9 @@ samples:
     expected_pattern_description: All pending orders by customer
     expected_columns: [customer, product, total_kg, num_orders, earliest_delivery]
 
-  - id: q04
-    question: any temperature excursions this week
-    path: library
-    expected_pattern_description: Temperature excursions in the last 7 days
-    expected_columns: [location, temperature, recorded_at, recorded_by]
+  # q04 (temperature excursions) removed in v0.3.1 — temperature queries are
+  # not in OpsMind's NL surface; that's a formal SCADA / compliance dashboard
+  # concern. See CHANGELOG.
 
   - id: q05
     question: average yield by product
@@ -171,13 +169,5 @@ samples:
         AND waste_kg > 20
     # Scalar — exact match.
 
-  - id: q20
-    question: average temperature by location in the last 7 days
-    path: llm
-    expected_sql: |
-      SELECT location, ROUND(AVG(temperature), 2) AS avg_temp
-      FROM temp_logs
-      WHERE recorded_at >= date('now', '-7 days')
-      GROUP BY location
-      ORDER BY location
-    # Multi-row — judge compares location set and per-location averages (±0.5°C).
+  # q20 (average temperature by location) removed in v0.3.1 — same reasoning
+  # as q04 above.
