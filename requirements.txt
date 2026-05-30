@@ -5,6 +5,8 @@ langchain-community>=0.0.10
 langchain-core>=0.1.0
 sqlalchemy>=2.0.0
 chromadb>=0.4.0
+# Pin chromadb transitive: <1.27 ships protobuf 3.x _pb2.py files that crash on modern protobuf
+opentelemetry-exporter-otlp-proto-grpc>=1.27
 sentence-transformers>=2.2.0
 pandas>=2.0.0
 plotly>=5.18.0
