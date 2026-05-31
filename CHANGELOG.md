@@ -7,6 +7,27 @@ OpsMind is deployed, not released — so entries accumulate under
 `[Unreleased]` and only gain a version + date when a tagged release is
 cut (none today; see `GOVERNANCE.md` § Release cadence for the rule).
 
+## [Unreleased]
+
+### Added
+
+- **Root-cause *scaffolding* (`modules/rca.py`).** Fuses the two
+  existing systems — production data + the document RAG — into an
+  evidence packet for an anomaly (yield drop today). It (1) ranks
+  production dimensions (line / shift / operator) by how far each
+  group's yield sits from the overall mean — plain descriptive
+  statistics, no inference; (2) retrieves the relevant corrective-action
+  passage from the SOP / HACCP / BRC document store via the pluggable
+  vector backend; (3) builds a 5-Whys *question* chain seeded by the
+  top candidate factor. **It never concludes.** `RcaScaffold` exposes
+  `owner` / `verified_by` slots that stay empty until a named human
+  takes ownership — `is_actionable_record` is False until they do. This
+  is the deliberate BRC-audit boundary: OpsMind correlates and
+  retrieves; a competent human concludes. 15 unit tests in
+  `tests/unit/test_rca.py` lock the audit boundary and the correlation
+  contract. Realises the v1.1 RCA-scaffolding line on the AKT 6 roadmap
+  (`tests/eval/AKT6-extension.md`).
+
 ## [0.3.1] - 2026-05-24
 
 ### Removed
