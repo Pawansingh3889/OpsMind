@@ -12,6 +12,7 @@ ranking contract is explicit and DB-independent.
 """
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -22,8 +23,6 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 # Seed the demo DB so the correlation queries have something to read.
-import os  # noqa: E402
-
 os.environ.setdefault(
     "OPSMIND_DB", f"sqlite:///{_ROOT / 'data' / 'demo.db'}"
 )
