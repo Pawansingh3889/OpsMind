@@ -33,7 +33,6 @@ if not (_ROOT / "data" / "demo.db").exists():
 
 from modules import rca  # noqa: E402
 
-
 # ---------------------------------------------------------------------------
 # The audit boundary: scaffold is never a conclusion until a human owns it
 # ---------------------------------------------------------------------------
