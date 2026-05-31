@@ -35,7 +35,7 @@ See [`docs/multi-plant-deployment.md`](docs/multi-plant-deployment.md) for the r
 
 ## What Problem Does This Solve?
 
-Factory managers and shift leads need answers from production data — yield, waste, compliance, traceability. Today, they either write SQL themselves (error-prone), wait for IT (slow), or export to Excel (outdated by the time it opens). OpsMind lets anyone type a question in plain English and get an answer in 5 seconds, directly from the production database.
+Factory managers and shift leads need answers from production data — yield, waste, compliance, traceability. Today, they either write SQL themselves (error-prone), wait for IT (slow), or export to Excel (outdated by the time it opens). OpsMind lets anyone type a question in plain English and get an answer in seconds, directly from the production database.
 
 ### Key Features
 
