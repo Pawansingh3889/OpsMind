@@ -125,6 +125,22 @@ cases are all covered.
   plan ownership are human work.
 - **It does not make the regulated judgement.** Root cause is scaffolded,
   never concluded.
+- **It does not SPC a metric that a calibrated instrument already
+  controls.** This is the load-bearing rule for what OpsMind may chart.
+  If a legally-mandated, real-time closed loop already governs a metric,
+  OpsMind running its own control chart on it would be both redundant and
+  an audit risk — a soft "looks in control" answer could appear to stand
+  in for the certified instrument. Two examples on the floor:
+  - **Pack weight / giveaway** is controlled by the **inline checkweigher**
+    (e.g. Loma), which accepts/rejects every pack to hold the Average
+    Weight / e-mark tolerance (≤2.5% of packs below T1, none below T2).
+    That instrument *is* the control and keeps its own record. OpsMind
+    must not chart weight as if it were the control.
+  - **Chiller / process temperature** is the **SCADA + calibrated-probe**
+    loop (see ADR-0003).
+  Yield is different, and that's why it's the one OpsMind does chart:
+  no instrument enforces yield — it's a post-hoc efficiency number — so
+  drift detection on it is additive, not a shadow of an existing control.
 - **It is not a certification.** Pairing OpsMind with a Green/Black Belt's
   judgement is the intended model, not a substitute for it.
 
@@ -132,14 +148,17 @@ cases are all covered.
 
 ## Roadmap — deeper Six Sigma support
 
-Candidate additions, in rough priority:
+Candidate additions, in rough priority. Note the boundary above: each
+must be a metric **no calibrated instrument already controls**.
 
 1. **Sigma level / DPMO** reporting per product or line — the headline
    capability metric, computable from the data already queried.
 2. **Cp / Cpk** (process capability vs spec limits) — needs the customer
-   spec limits (CTQs) as an input.
-3. **SPC on more metrics** — giveaway %, weight variance, chiller
-   temperature trend (the v1.2 predictive-alerting direction).
+   spec limits (CTQs) as an input. Apply to yield/efficiency metrics, not
+   to instrument-controlled ones like pack weight.
+3. **SPC on more *efficiency* metrics** — e.g. labour productivity,
+   changeover time, line-uptime. Explicitly **not** pack weight/giveaway
+   (checkweigher-controlled) or temperature (SCADA-controlled).
 4. **Western Electric run rules** — beyond single-point ±3σ, detect runs
    and trends (7 points one side of the mean, etc.) for earlier warning.
 

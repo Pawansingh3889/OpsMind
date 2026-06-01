@@ -63,6 +63,14 @@ def check_yield_control_chart(baseline_weeks=12):
 
     The most recent completed week is the point under test; the prior
     ``baseline_weeks`` weeks form the control baseline.
+
+    SCOPE NOTE — yield only, by design. Do NOT add SPC checks for metrics
+    that a calibrated instrument already controls in real time: pack weight
+    / giveaway is governed by the inline checkweigher (Average Weight /
+    e-mark, <=2.5% below T1) and temperature by the SCADA/probe loop
+    (ADR-0003). Charting those here would duplicate a certified control and
+    create an audit risk. Yield is fair game precisely because no
+    instrument enforces it. See docs/six-sigma-alignment.md.
     """
     df = query(f"""
         SELECT pr.name,
