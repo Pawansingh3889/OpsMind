@@ -1,13 +1,15 @@
 """Smart alerts and anomaly detection for operations."""
 from config import MAX_WEEKLY_HOURS, PROD_YIELD_MIN, YIELD_DROP_THRESHOLD
+from modules import spc
 from modules.database import query
-from modules.sql_dialect import days_ago, days_ahead, days_until
+from modules.sql_dialect import date_now, days_ago, days_ahead, days_until
 
 
 def check_all_alerts():
     """Run all alert checks and return a list of active alerts."""
     alerts = []
     alerts.extend(check_yield_drops())
+    alerts.extend(check_yield_control_chart())
     alerts.extend(check_temperature_excursions())
     alerts.extend(check_overtime())
     alerts.extend(check_expiring_stock())
@@ -46,6 +48,64 @@ def check_yield_drops():
                 'message': f"This week: {row['this_week']}% vs 30-day avg: {row['monthly_avg']}% (down {drop:.1f}%). Waste cost: GBP {waste_cost:,.0f}.",
                 'category': 'yield'
             })
+    return alerts
+
+
+def check_yield_control_chart(baseline_weeks=12):
+    """Statistical-process-control alert on per-product weekly yield.
+
+    Where ``check_yield_drops`` uses a single fixed threshold (5% below the
+    30-day average) for every product, this judges each product against
+    *its own* historical variation. A product whose yield naturally swings
+    week to week needs a bigger move to be meaningful; a steady one signals
+    on a smaller one. This is the Six Sigma "Control" phase: an individuals
+    control chart with +/-3 sigma limits (see ``modules/spc.py``).
+
+    The most recent completed week is the point under test; the prior
+    ``baseline_weeks`` weeks form the control baseline.
+    """
+    df = query(f"""
+        SELECT pr.name,
+               CAST((julianday({date_now()}) - julianday(p.date)) / 7 AS INT) AS weeks_ago,
+               AVG(p.yield_pct) AS week_yield
+        FROM production p
+        JOIN products pr ON p.product_id = pr.id
+        WHERE p.date >= {days_ago(7 * (baseline_weeks + 1))}
+          AND p.yield_pct IS NOT NULL
+        GROUP BY pr.name, weeks_ago
+        ORDER BY pr.name, weeks_ago
+    """)
+
+    alerts = []
+    for name in df['name'].unique():
+        series = df[df['name'] == name].sort_values('weeks_ago')
+        if series.empty:
+            continue
+        # The most recent bucket (smallest weeks_ago) is the point under
+        # test; every older bucket forms the control baseline. Using the
+        # min rather than a hardcoded 0 keeps this correct even when the
+        # latest data is several weeks old.
+        latest_week = int(series['weeks_ago'].min())
+        value = float(series[series['weeks_ago'] == latest_week].iloc[0]['week_yield'])
+        baseline = series[series['weeks_ago'] > latest_week]['week_yield'].tolist()
+
+        result = spc.classify(value, baseline)
+        if not result.is_signal or result.direction != 'below':
+            # Only a downward yield breach is an operational concern.
+            continue
+
+        level = 'critical' if result.verdict == 'out_of_control' else 'warning'
+        alerts.append({
+            'level': level,
+            'icon': 'chart-line-down',
+            'title': f"Yield out of control: {name} ({abs(result.sigma_distance):.1f}σ below mean)",
+            'message': (
+                f"Latest weekly yield {value:.1f}% is {abs(result.sigma_distance):.1f} "
+                f"sigma below the {result.mean:.1f}% process mean "
+                f"(control limit {result.lcl:.1f}%). Investigate special cause."
+            ),
+            'category': 'yield',
+        })
     return alerts
 
 
